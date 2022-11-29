@@ -1,0 +1,16 @@
+goos: linux
+goarch: amd64
+pkg: github.com/facebookincubator/go-obs/tool/experimental/tracer
+cpu: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
+BenchmarkSpanStartRelease/standard-time.Time-16         	14279470	        78.15 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/standard-time.Time-16         	15101160	        78.06 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/standard-time.Time-16         	14905906	        78.67 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/standard-time.Time-16         	14373682	        79.21 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/standard-time.Time-16         	14726880	        81.10 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/tsc-time.Time-16              	40416648	        29.82 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/tsc-time.Time-16              	40484254	        29.27 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/tsc-time.Time-16              	39834046	        30.82 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/tsc-time.Time-16              	40268462	        30.07 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSpanStartRelease/tsc-time.Time-16              	40333113	        29.56 ns/op	       0 B/op	       0 allocs/op
+PASS
+ok  	github.com/facebookincubator/go-obs/tool/experimental/tracer	14.511s

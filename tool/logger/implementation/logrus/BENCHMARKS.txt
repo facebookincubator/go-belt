@@ -1,0 +1,42 @@
+goos: linux
+goarch: amd64
+pkg: github.com/facebookincubator/go-obs/tool/logger/implementation/logrus
+cpu: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
+BenchmarkWithFields/depth1/callLog-false/bare_logrus-16         	 2081280	       551.9 ns/op	     896 B/op	       6 allocs/op
+BenchmarkWithFields/depth1/callLog-false/adapted_logrus-16      	 4713654	       249.6 ns/op	     512 B/op	       8 allocs/op
+BenchmarkWithFields/depth1/callLog-true/bare_logrus-16          	  427244	      2852 ns/op	    1473 B/op	      25 allocs/op
+BenchmarkWithFields/depth1/callLog-true/adapted_logrus-16       	  662168	      1865 ns/op	    1242 B/op	      25 allocs/op
+BenchmarkWithFields/depth2/callLog-false/bare_logrus-16         	  847208	      1325 ns/op	    1792 B/op	      12 allocs/op
+BenchmarkWithFields/depth2/callLog-false/adapted_logrus-16      	 2292178	       508.1 ns/op	    1024 B/op	      16 allocs/op
+BenchmarkWithFields/depth2/callLog-true/bare_logrus-16          	  245160	      4797 ns/op	    2595 B/op	      37 allocs/op
+BenchmarkWithFields/depth2/callLog-true/adapted_logrus-16       	  559682	      2136 ns/op	    1755 B/op	      33 allocs/op
+BenchmarkWithFields/depth4/callLog-false/bare_logrus-16         	  281527	      4089 ns/op	    5440 B/op	      24 allocs/op
+BenchmarkWithFields/depth4/callLog-false/adapted_logrus-16      	 1221147	       977.5 ns/op	    2048 B/op	      32 allocs/op
+BenchmarkWithFields/depth4/callLog-true/bare_logrus-16          	  110418	     11144 ns/op	    8512 B/op	      63 allocs/op
+BenchmarkWithFields/depth4/callLog-true/adapted_logrus-16       	  371994	      3190 ns/op	    3654 B/op	      49 allocs/op
+BenchmarkWithFields/depth8/callLog-false/bare_logrus-16         	   80060	     14559 ns/op	   19891 B/op	      50 allocs/op
+BenchmarkWithFields/depth8/callLog-false/adapted_logrus-16      	  507052	      2080 ns/op	    4096 B/op	      64 allocs/op
+BenchmarkWithFields/depth8/callLog-true/bare_logrus-16          	   42153	     28803 ns/op	   26425 B/op	     115 allocs/op
+BenchmarkWithFields/depth8/callLog-true/adapted_logrus-16       	  249049	      5053 ns/op	    6884 B/op	      81 allocs/op
+BenchmarkWithFields/depth16/callLog-false/bare_logrus-16        	   23515	     55796 ns/op	   76860 B/op	     111 allocs/op
+BenchmarkWithFields/depth16/callLog-false/adapted_logrus-16     	  274687	      4088 ns/op	    8192 B/op	     128 allocs/op
+BenchmarkWithFields/depth16/callLog-true/bare_logrus-16         	   15406	     77218 ns/op	   90684 B/op	     228 allocs/op
+BenchmarkWithFields/depth16/callLog-true/adapted_logrus-16      	  143194	      8382 ns/op	   13549 B/op	     146 allocs/op
+BenchmarkWithFields/depth32/callLog-false/bare_logrus-16        	    6025	    185448 ns/op	  297908 B/op	     253 allocs/op
+BenchmarkWithFields/depth32/callLog-false/adapted_logrus-16     	  146812	      7801 ns/op	   16384 B/op	     256 allocs/op
+BenchmarkWithFields/depth32/callLog-true/bare_logrus-16         	    4884	    238588 ns/op	  326106 B/op	     470 allocs/op
+BenchmarkWithFields/depth32/callLog-true/adapted_logrus-16      	   77895	     14921 ns/op	   26370 B/op	     274 allocs/op
+BenchmarkWithFields/depth64/callLog-false/bare_logrus-16        	    1666	    705184 ns/op	 1162543 B/op	     566 allocs/op
+BenchmarkWithFields/depth64/callLog-false/adapted_logrus-16     	   65120	     16116 ns/op	   32768 B/op	     512 allocs/op
+BenchmarkWithFields/depth64/callLog-true/bare_logrus-16         	    1365	    895116 ns/op	 1222067 B/op	     982 allocs/op
+BenchmarkWithFields/depth64/callLog-true/adapted_logrus-16      	   39283	     30294 ns/op	   52397 B/op	     530 allocs/op
+BenchmarkWithFields/depth128/callLog-false/bare_logrus-16       	     411	   2913838 ns/op	 4716472 B/op	    1212 allocs/op
+BenchmarkWithFields/depth128/callLog-false/adapted_logrus-16    	   37930	     32100 ns/op	   65536 B/op	    1024 allocs/op
+BenchmarkWithFields/depth128/callLog-true/bare_logrus-16        	     382	   3159596 ns/op	 4855964 B/op	    2029 allocs/op
+BenchmarkWithFields/depth128/callLog-true/adapted_logrus-16     	   21060	     57338 ns/op	  107149 B/op	    1042 allocs/op
+BenchmarkWithFields/depth256/callLog-false/bare_logrus-16       	      96	  12197207 ns/op	19199816 B/op	    2300 allocs/op
+BenchmarkWithFields/depth256/callLog-false/adapted_logrus-16    	   18909	     62657 ns/op	  131072 B/op	    2048 allocs/op
+BenchmarkWithFields/depth256/callLog-true/bare_logrus-16        	      92	  12618632 ns/op	19510109 B/op	    3901 allocs/op
+BenchmarkWithFields/depth256/callLog-true/adapted_logrus-16     	    9967	    118005 ns/op	  213843 B/op	    2066 allocs/op
+PASS
+ok  	github.com/facebookincubator/go-obs/tool/logger/implementation/logrus	51.294s
