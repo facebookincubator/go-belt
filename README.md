@@ -5,7 +5,34 @@
 
 [![go report](https://goreportcard.com/badge/github.com/facebookincubator/go-belt)](https://goreportcard.com/report/github.com/facebookincubator/go-belt)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
-[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt?tab=doc)
+
+Out of the box tools (interfaces):
+|Module|GoDoc|QuickStart|
+|-|-|-|
+|[Logger](https://github.com/facebookincubator/go-belt/blob/main/tool/logger/types/logger.go#L37-L219)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/logger?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/logger?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/tool/logger/examples/doc_test.go)|
+|[Metrics](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/metrics/types/metrics.go#L20-L66) (experimental)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/metrics?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/metrics?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/metrics/examples/doc_test.go)|
+|[Tracer](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/tracer/tracer.go#L22-L69) (experimental)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/tracer?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/tracer?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/tracer/examples/doc_test.go)|
+|[ErrorMonitor](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/errmon/types/error_monitor.go#L47-L89) (experimental)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/errmon?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/errmon?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/errmon/examples/doc_test.go)|
+|[Belt](https://github.com/facebookincubator/go-belt/blob/main/belt.go#L21-L34)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt?tab=doc)||
+|Context (beltctx)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/beltctx?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/beltctx?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/examples/everything/main.go#L39-L48)|
+
+Out of the box implementation examples:
+|Module|Implementation|GoDoc|QuickStart|
+|-|-|-|-|
+|Logger|logrus|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/logger/implementation/logrus?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/logger/implementation/logrus?tab=doc)|`logrus.Default()`|
+|Logger|zap|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/logger/implementation/zap?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/logger/implementation/zap?tab=doc)|`zap.Default()`|
+|Logger|glog|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/logger/implementation/glog?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/logger/implementation/glog?tab=doc)|`glog.New()`|
+|Metrics|prometheus|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/metrics/implementation/prometheus?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/metrics/implementation/prometheus?tab=doc)|`prometheus.Default()`|
+|ErrorMonitor|sentry|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/errmon/implementation/sentry?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/errmon/implementation/sentry?tab=doc)|`sentry.New(sentryClient)`|
+|Tracer|zipkin|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/tracer/implementation/zipkin?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/tracer/implementation/zipkin?tab=doc)|`zipkin.New(zipkinTracer)`|
+
+</td>
+<td style='vertical-align:top'>
+
+![logo](doc/logo/variant2-small.png "logo")
+
+</td>
+<table>
 
 # Index
 1. [Mission](#mission)
@@ -14,14 +41,6 @@
 4. [Why should I use it?](#why-should-I-use-it)
 5. [Quick start](#quick-start)
 6. [Exotic cases](#exotic-cases)
-
-</td>
-<td>
-
-![logo](doc/logo/variant2-small.png "logo")
-
-</td>
-<table>
 
 # About
 
@@ -296,8 +315,8 @@ logrusEntry.Debugf("hey!")
 
 Depending on how many features your logger is ready to provide it should implement one of:
 * `interface{ Printf(format string, args ...any)` or just be of type `func(string, ...any)`
-* [`Emitter`](https://github.com/facebookincubator/go-belt/blob/a80187cd561e4c30237aff5fccd46f06981d41e2/tool/logger/types/logger.go#L225)
-* [`CompactLogger`](https://github.com/facebookincubator/go-belt/blob/a80187cd561e4c30237aff5fccd46f06981d41e2/tool/logger/adapter/compact_logger.go#L17)
-* [`Logger`](https://github.com/facebookincubator/go-belt/blob/a80187cd561e4c30237aff5fccd46f06981d41e2/tool/logger/types/logger.go#L25)
+* [`Emitter`](https://github.com/facebookincubator/go-belt/blob/main/tool/logger/types/logger.go#L221-L251)
+* [`CompactLogger`](https://github.com/facebookincubator/go-belt/blob/main/tool/logger/adapter/compact_logger.go#L21-L131)
+* [`Logger`](https://github.com/facebookincubator/go-belt/blob/main/tool/logger/types/logger.go#L37-L219)
 
 And then you may call `adapter.LoggerFromAny` and it will convert your logger to `Logger` by adding everything what is missing in a naive generic way.
