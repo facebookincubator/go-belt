@@ -46,6 +46,14 @@ type Event struct {
 	Goroutines []Goroutine
 }
 
+// GetID is a safe accessor of an event ID, it returns an empty ID if Event is nil.
+func (ev *Event) GetID() EventID {
+	if ev == nil {
+		return EventID("")
+	}
+	return ev.ID
+}
+
 // Goroutine is a full collection of data collected on a specific goroutine.
 type Goroutine = gostackparse.Goroutine
 
