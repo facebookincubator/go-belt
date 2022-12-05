@@ -14,23 +14,32 @@ package errmon
 
 import (
 	"github.com/facebookincubator/go-belt"
-	"github.com/facebookincubator/go-belt/tool/experimental/errmon/implementation/dummy"
+	loggerimpl "github.com/facebookincubator/go-belt/tool/experimental/errmon/implementation/logger"
+	"github.com/facebookincubator/go-belt/tool/logger"
 )
 
 // Default is an overridable function which returns the default ErrorMonitor.
 //
 // This function is called to get an ErrorMonitor, when functions FromBelt and FromCtx
 // are used on a scope, where an ErrorMonitor is not set.
-var Default = dummy.New
+var Default = func(belt *belt.Belt) ErrorMonitor {
+	loggerIface := logger.FromBelt(belt)
+	if loggerIface != nil {
+		return loggerimpl.New(loggerIface)
+	}
+
+	return loggerimpl.Default()
+}
 
 // FromBelt returns an ErrorMonitor from a given Belt if one is set;
 // and returns the default one, if not.
 func FromBelt(belt *belt.Belt) ErrorMonitor {
-	loggerIface := belt.Tools().GetByID(ToolID)
-	if loggerIface == nil {
-		return Default()
+	errMonIface := belt.Tools().GetByID(ToolID)
+	if errMonIface == nil {
+		return Default(belt)
 	}
-	return loggerIface.(ErrorMonitor)
+
+	return errMonIface.(ErrorMonitor)
 }
 
 // BeltWithErrorMonitor returns an Belt with the ErrorMonitor set.
