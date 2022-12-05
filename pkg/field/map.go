@@ -12,19 +12,23 @@
 
 package field
 
+import (
+	"fmt"
+)
+
 // Map is just a handy low performance way to pass fields
 // similar to how it is done in logrus.
-type Map map[Key]Value
+type Map[V any] map[Key]V
 
-var _ AbstractFields = (Map)(nil)
+var _ AbstractFields = (Map[Value])(nil)
 
 // Len implements AbstractFields.
-func (m Map) Len() int {
+func (m Map[V]) Len() int {
 	return len(m)
 }
 
 // ForEachField implements AbstractFields.
-func (m Map) ForEachField(callback func(f *Field) bool) bool {
+func (m Map[V]) ForEachField(callback func(f *Field) bool) bool {
 	var f Field
 	for k, v := range m {
 		f.Key = k
@@ -34,4 +38,29 @@ func (m Map) ForEachField(callback func(f *Field) bool) bool {
 		}
 	}
 	return true
+}
+
+// Map is an abstract map which implements field.AbstractFields.
+//
+// It differs from Map, because it also accepts non-string keys.
+type MapGeneric[K comparable, V any] map[K]V
+
+var _ AbstractFields = (MapGeneric[string, any])(nil)
+
+// ForEachField implements field.AbstractFields.
+func (m MapGeneric[K, V]) ForEachField(callback func(f *Field) bool) bool {
+	var f Field
+	for k, v := range m {
+		f.Key = fmt.Sprint(k)
+		f.Value = v
+		if !callback(&f) {
+			return false
+		}
+	}
+	return true
+}
+
+// Len implements field.AbstractFields.
+func (m MapGeneric[K, V]) Len() int {
+	return len(m)
 }
