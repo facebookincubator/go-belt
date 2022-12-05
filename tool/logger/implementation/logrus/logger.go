@@ -28,6 +28,7 @@ import (
 
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
+	"github.com/facebookincubator/go-belt/pkg/valuesparser"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/facebookincubator/go-belt/tool/logger/adapter"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
@@ -273,7 +274,7 @@ func (l *CompactLogger) Log(level types.Level, values ...any) {
 	}
 
 	var finalFields field.AbstractFields
-	valuesParser := adapter.ValuesParser(values)
+	valuesParser := valuesparser.AnySlice(values)
 	if preHooksResult.ExtraFields != nil {
 		finalFields = field.Slice[field.AbstractFields]{&valuesParser, preHooksResult.ExtraFields}
 	} else {

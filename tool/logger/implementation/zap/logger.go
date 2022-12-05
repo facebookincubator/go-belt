@@ -26,6 +26,7 @@ import (
 
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
+	"github.com/facebookincubator/go-belt/pkg/valuesparser"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/facebookincubator/go-belt/tool/logger/adapter"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
@@ -371,7 +372,7 @@ func (l *CompactLogger) Log(level types.Level, values ...any) {
 		}
 	}
 
-	valuesParser := adapter.ValuesParser(values)
+	valuesParser := valuesparser.AnySlice(values)
 
 	if len(l.hooks) != 0 {
 		entry := l.acquireEntry()
