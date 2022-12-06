@@ -54,6 +54,31 @@ func (ev *Event) GetID() EventID {
 	return ev.ID
 }
 
+// AsError is a syntax-sugar function which returns a non-nil value only
+// if there was an error or a panic observed.
+//
+// For example this block:
+//
+//	defer func() {
+//		ev := errmon.ObserveRecoverCtx(ctx, recover())
+//		if ev != nil {
+//			err = fmt.Errorf("got panic: %v (event ID: '%s')", ev.PanicValue, ev.ID)
+//		}
+//	}()
+//
+// Could be replaced with simpler:
+//
+//	defer func() { err = errmon.ObserveRecoverCtx(ctx, recover()).AsError() }()
+func (ev *Event) AsError() error {
+	if ev == nil {
+		return nil
+	}
+	if ev.IsPanic {
+		return ErrPanic{Event: ev}
+	}
+	return ErrError{Event: ev}
+}
+
 // Goroutine is a full collection of data collected on a specific goroutine.
 type Goroutine = gostackparse.Goroutine
 
