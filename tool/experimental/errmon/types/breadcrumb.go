@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/go-belt/pkg/field"
-	logadapter "github.com/facebookincubator/go-belt/tool/logger/adapter"
+	"github.com/facebookincubator/go-belt/pkg/valuesparser"
 )
 
 // Breadcrumb contains auxiliary information about something that happened before
@@ -43,7 +43,7 @@ func (bc *Breadcrumb) ForEachField(callback func(f *field.Field) bool) bool {
 	v := reflect.Indirect(reflect.ValueOf(bc.Data))
 	switch v.Kind() {
 	case reflect.Struct:
-		return logadapter.ParseStruct(bc.Path, v, callback)
+		return valuesparser.ParseStructValue(bc.Path, v, callback)
 	default:
 		return callback(&field.Field{
 			Key:        "breadcrumb_" + strings.Join(bc.Path, "."),

@@ -14,14 +14,13 @@ package adapter
 
 import (
 	"fmt"
-	"io"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
+	"github.com/facebookincubator/go-belt/pkg/valuesparser"
 	"github.com/facebookincubator/go-belt/tool/logger/experimental"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
 )
@@ -115,149 +114,6 @@ func (l *GenericLogger) Emitter() types.Emitter {
 	return l.Emitters
 }
 
-// ValuesParser a handler for arbitrary values, which extracts structured fields/values
-// by method ForEachField() and provides everything else as a string by method WriteUnparsed.
-//
-// It also implements fields.AbstractFields, so it could be directly used as a collection
-// of structured fields right after just a type-casting ([]any -> ValuesParser). It is
-// supposed to be a zero allocation implementation in future.
-//
-// For example it is used to parse all the arguments of logger.Logger.Log.
-type ValuesParser []any
-
-// ForEachField implements field.AbstractFields.
-func (p *ValuesParser) ForEachField(callback func(f *field.Field) bool) bool {
-	for idx := 0; idx < len(*p); {
-		value := (*p)[idx]
-
-		if value == nil {
-			idx++
-			continue
-		}
-		v := reflect.Indirect(reflect.ValueOf(value))
-		if forEachFielder, ok := v.Interface().(field.ForEachFieldser); ok {
-			if !forEachFielder.ForEachField(callback) {
-				return false
-			}
-			idx++
-			continue
-		}
-
-		switch v.Kind() {
-		case reflect.Map:
-			r := ParseMap(v, callback)
-			(*p)[idx] = nil
-			if !r {
-				return false
-			}
-		case reflect.Struct:
-			r := ParseStruct(nil, v, callback)
-			(*p)[idx] = nil
-			if !r {
-				return false
-			}
-		default:
-			idx++
-			continue
-		}
-	}
-	return true
-}
-
-// ParseMap calls the callback for each pair in the map until first false is returned
-//
-// It returns false if callback returned false.
-func ParseMap(m reflect.Value, callback func(f *field.Field) bool) bool {
-	var f field.Field
-	for _, keyV := range m.MapKeys() {
-		valueV := m.MapIndex(keyV)
-		switch key := keyV.Interface().(type) {
-		case field.Key:
-			f.Key = key
-		default:
-			f.Key = fmt.Sprint(key)
-		}
-		f.Value = valueV.Interface()
-		if !callback(&f) {
-			return false
-		}
-	}
-	return true
-}
-
-// ParseStruct parses a structure to a collection of fields.
-//
-// `fieldPath` is the prefix of the field-name.
-// `_struct` is the structure to be parsed (provided as a reflect.Value).
-// `callback` is the function called for each found field, until first false is returned.
-//
-// It returns false if callback returned false.
-func ParseStruct(fieldPath []string, _struct reflect.Value, callback func(f *field.Field) bool) bool {
-	s := reflect.Indirect(_struct)
-
-	var f field.Field
-	// TODO: optimize this
-	t := s.Type()
-
-	fieldPath = append(fieldPath, "")
-
-	fieldCount := s.NumField()
-	for fieldNum := 0; fieldNum < fieldCount; fieldNum++ {
-		structFieldType := t.Field(fieldNum)
-		if structFieldType.PkgPath != "" {
-			// unexported
-			continue
-		}
-		logTag := structFieldType.Tag.Get("log")
-		if logTag == "-" {
-			continue
-		}
-		structField := s.Field(fieldNum)
-		if structField.IsZero() {
-			continue
-		}
-		value := reflect.Indirect(structField)
-
-		pathComponent := structFieldType.Name
-		if logTag != "" {
-			pathComponent = logTag
-		}
-		fieldPath[len(fieldPath)-1] = pathComponent
-
-		if value.Kind() == reflect.Struct {
-			if !ParseStruct(fieldPath, value, callback) {
-				return false
-			}
-			continue
-		}
-
-		f.Key = strings.Join(fieldPath, ".")
-		f.Value = value.Interface()
-		if !callback(&f) {
-			return false
-		}
-	}
-
-	return true
-}
-
-// Len implements field.AbstractFields.
-func (p *ValuesParser) Len() int {
-	return len(*p)
-}
-
-// WriteUnparsed writes unstructud data (everything that was never considered as a structued field by
-// ForEachField method) to the given io.Writer.
-func (p *ValuesParser) WriteUnparsed(w io.Writer) {
-	for _, value := range *p {
-		if value == nil {
-			continue
-		}
-
-		fmt.Fprint(w, value)
-	}
-}
-
 // Log implements types.CompactLogger.
 func (l *GenericLogger) Log(level types.Level, values ...any) {
 	preHooksResult := LogPreprocess(l.CurrentPreHooks, l.TraceIDs, level, l.CurrentLevel >= level, values...)
@@ -274,7 +130,7 @@ func (l *GenericLogger) Log(level types.Level, values ...any) {
 	}
 
 	// TODO: optimize this
-	valuesParser := ValuesParser(values)
+	valuesParser := valuesparser.AnySlice(values)
 	fields := make(field.Fields, 0, valuesParser.Len())
 	valuesParser.ForEachField(func(f *field.Field) bool {
 		fields = append(fields, *f)
