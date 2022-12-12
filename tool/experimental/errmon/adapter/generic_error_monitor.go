@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/facebookincubator/go-belt"
-	"github.com/facebookincubator/go-belt/pkg/caller"
 	"github.com/facebookincubator/go-belt/pkg/field"
+	"github.com/facebookincubator/go-belt/pkg/runtime"
 	errmontypes "github.com/facebookincubator/go-belt/tool/experimental/errmon/types"
 	"github.com/facebookincubator/go-belt/tool/experimental/tracer"
 	loggertypes "github.com/facebookincubator/go-belt/tool/logger/types"
@@ -27,7 +27,7 @@ import (
 // ErrorMonitorFromEmitter wraps a Emitter with a generic implementation of of ErrorMonitor.
 func ErrorMonitorFromEmitter(
 	emitter Emitter,
-	callerFrameFilter caller.PCFilter,
+	callerFrameFilter runtime.PCFilter,
 ) ErrorMonitor {
 	return &GenericErrorMonitor{
 		EmitterValue:      emitter,
@@ -38,7 +38,7 @@ func ErrorMonitorFromEmitter(
 // GenericErrorMonitor implements ErrorMonitor given a Emitter.
 type GenericErrorMonitor struct {
 	EmitterValue      Emitter
-	CallerFrameFilter caller.PCFilter
+	CallerFrameFilter runtime.PCFilter
 	ContextFields     *FieldsChain
 	TraceIDs          TraceIDs
 	PreHooks          PreHooks
@@ -65,9 +65,13 @@ func (h *GenericErrorMonitor) newEvent(belt *belt.Belt, extraFields field.Abstra
 		ID: errmontypes.RandomEventID(),
 	}
 
+	// stack trace
+	ev.Exception.StackTrace = runtime.CallerStackTrace(h.CallerFrameFilter)
+
 	// caller
-	if pc := loggertypes.PC(caller.PC(h.CallerFrameFilter)); pc.Defined() {
-		ev.Caller = pc
+	var pcs [1]runtime.PC
+	if ev.StackTrace.ProgramCounters(pcs[:]) != 0 {
+		ev.Entry.Caller = pcs[0]
 	}
 
 	// goroutines

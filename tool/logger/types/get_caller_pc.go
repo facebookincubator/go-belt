@@ -13,17 +13,17 @@
 package types
 
 import (
-	"github.com/facebookincubator/go-belt/pkg/caller"
+	"github.com/facebookincubator/go-belt/pkg/runtime"
 )
 
 // GetCallerPC is a function which returns the Program Counter (PC)
 // of the piece of code which invoked logging the entry.
 //
 // It is called by a Logger to fill the value Entry.Caller.
-type GetCallerPC = func() PC
+type GetCallerPC = func() runtime.PC
 
 // DefaultGetCallerFunc is the default GetCallerPC function. It is
 // used if a Logger was initialized without option OptionGetCallerFunc.
-var DefaultGetCallerFunc GetCallerPC = func() PC {
-	return PC(caller.PC(nil))
+var DefaultGetCallerFunc GetCallerPC = func() runtime.PC {
+	return runtime.Caller(nil)
 }

@@ -10,22 +10,50 @@
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package types
+package runtime
 
 import (
-	"fmt"
 	"runtime"
-	"strings"
 )
 
-// StackTrace is a goroutine execution frames stack trace.
-type StackTrace []runtime.Frame
+// PC is just a handy wrapper around Program Counter (PC) [see
+// "program counter" in https://pkg.go.dev/runtime].
+type PC uintptr
 
-// String implements fmt.Stringer.
-func (s StackTrace) String() string {
-	var result strings.Builder
-	for idx, frame := range s {
-		result.WriteString(fmt.Sprintf("%d. %s:%d: %s\n", idx+1, frame.File, frame.Line, frame.Function))
+// Defined returns true if the caller is defined
+func (pc PC) Defined() bool {
+	return pc != 0
+}
+
+// Func returns *runtime.Func describing the caller.
+func (pc PC) Func() *runtime.Func {
+	if !pc.Defined() {
+		return nil
 	}
-	return result.String()
+	return runtime.FuncForPC(uintptr(pc))
+}
+
+// FileLine returns the source code file path.
+//
+// In standard Go implementation this is a zero-allocation function.
+func (pc PC) FileLine() (string, int) {
+	if !pc.Defined() {
+		return "", 0
+	}
+	return pc.Func().FileLine(uintptr(pc))
+}
+
+// Entry returns the entry address of the function corresponding to the program counter.
+func (pc PC) Entry() uintptr {
+	return pc.Func().Entry()
+}
+
+// Frame returns a runtime.Frame describing the PC.
+func (pc PC) Frame() *runtime.Frame {
+	frames := runtime.CallersFrames([]uintptr{uintptr(pc)})
+	if frames == nil {
+		return nil
+	}
+	frame, _ := frames.Next()
+	return &frame
 }

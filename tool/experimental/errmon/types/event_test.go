@@ -14,10 +14,11 @@ package types
 
 import (
 	"fmt"
-	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/facebookincubator/go-belt/pkg/runtime"
 )
 
 func TestEventGetID(t *testing.T) {
@@ -28,7 +29,7 @@ func TestEventError(t *testing.T) {
 	ev := &Event{
 		ID: "1",
 		Exception: Exception{
-			StackTrace: []runtime.Frame{
+			StackTrace: runtime.Frames{
 				{
 					Function: "func1()",
 					File:     "file1.go",

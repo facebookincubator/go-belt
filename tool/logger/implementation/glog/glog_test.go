@@ -13,18 +13,19 @@
 package glog
 
 import (
-	"runtime"
+	stdruntime "runtime"
 	"testing"
 	"time"
 
 	"github.com/golang/glog"
 
+	"github.com/facebookincubator/go-belt/pkg/runtime"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
 )
 
-func testFuncPC() types.PC {
-	pc, _, _, _ := runtime.Caller(0)
-	return types.PC(pc)
+func testFuncPC() runtime.PC {
+	pc, _, _, _ := stdruntime.Caller(0)
+	return runtime.PC(pc)
 }
 
 func TestGLog(t *testing.T) {

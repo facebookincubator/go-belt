@@ -14,10 +14,10 @@ package sentry
 
 import (
 	"fmt"
-	"runtime"
 	"strings"
 
 	"github.com/facebookincubator/go-belt/pkg/field"
+	"github.com/facebookincubator/go-belt/pkg/runtime"
 	"github.com/facebookincubator/go-belt/tool/experimental/errmon"
 	errmonadapter "github.com/facebookincubator/go-belt/tool/experimental/errmon/adapter"
 	errmontypes "github.com/facebookincubator/go-belt/tool/experimental/errmon/types"
@@ -123,17 +123,25 @@ func GoroutinesToSentry(goroutines []errmontypes.Goroutine, currentGoroutineID i
 }
 
 // StackTraceToSentry converts a stack trace to the Sentry format.
-func StackTraceToSentry(stackTrace []runtime.Frame) *sentry.Stacktrace {
-	result := &sentry.Stacktrace{
-		Frames: make([]sentry.Frame, 0, len(stackTrace)),
+func StackTraceToSentry(stackTrace runtime.StackTrace) *sentry.Stacktrace {
+	frames := stackTrace.Frames()
+	if frames == nil {
+		return nil
 	}
-	for _, frame := range stackTrace {
+	result := &sentry.Stacktrace{
+		Frames: make([]sentry.Frame, 0, stackTrace.Len()),
+	}
+	for {
+		frame, ok := frames.Next()
 		result.Frames = append(result.Frames, sentry.Frame{
 			Function: frame.Function,
 			Module:   FuncNameToSentryModule(frame.Function),
 			Filename: frame.File,
 			Lineno:   frame.Line,
 		})
+		if !ok {
+			break
+		}
 	}
 	return result
 }
