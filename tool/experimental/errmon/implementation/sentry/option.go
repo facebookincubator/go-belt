@@ -13,7 +13,7 @@
 package sentry
 
 import (
-	"github.com/facebookincubator/go-belt/pkg/caller"
+	"github.com/facebookincubator/go-belt/pkg/runtime"
 )
 
 // Option is an abstract option, which defines the behavior of an ErrorMonitor.
@@ -32,15 +32,15 @@ func (s options) Config() config {
 }
 
 type config struct {
-	CallerFrameFilter caller.PCFilter
+	CallerFrameFilter runtime.PCFilter
 }
 
 // OptionCallerFrameFilter defines how to find the caller frame. It should
 // return false on each function which cannot be used as a caller frame.
 //
 // For example, this might be useful to skip frames of a ErrorMonitor implementation.
-type OptionCallerFrameFilter caller.PCFilter
+type OptionCallerFrameFilter runtime.PCFilter
 
 func (opt OptionCallerFrameFilter) apply(cfg *config) {
-	cfg.CallerFrameFilter = caller.PCFilter(opt)
+	cfg.CallerFrameFilter = runtime.PCFilter(opt)
 }

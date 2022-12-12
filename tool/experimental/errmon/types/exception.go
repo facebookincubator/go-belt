@@ -12,11 +12,15 @@
 
 package types
 
+import (
+	"github.com/facebookincubator/go-belt/pkg/runtime"
+)
+
 // Exception is the immediate information about what gone wrong.
 type Exception struct {
 	IsPanic    bool
 	PanicValue any
 	Error      error
 
-	StackTrace StackTrace
+	StackTrace runtime.StackTrace
 }

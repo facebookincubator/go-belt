@@ -17,6 +17,7 @@ import (
 
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
+	"github.com/facebookincubator/go-belt/pkg/runtime"
 )
 
 // Entry a single log entry to be logged/written.
@@ -53,7 +54,7 @@ type Entry struct {
 	// of the entry.
 	//
 	// See also OptionGetCallerFunc and DefaultGetCallerFunc.
-	Caller PC
+	Caller runtime.PC
 }
 
 // EntryProperty defines special implementation-specific behavior related to a specific Entry.
