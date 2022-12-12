@@ -150,6 +150,10 @@ var _ FramesIterator = (*framesIterator)(nil)
 
 // Next implements FramesIterator.
 func (i *framesIterator) Next() (runtime.Frame, bool) {
+	if len(i.Frames) <= i.CurPosition {
+		return runtime.Frame{}, false
+	}
+
 	frame := i.Frames[i.CurPosition]
 	i.CurPosition++
 	return frame, len(i.Frames) > i.CurPosition
