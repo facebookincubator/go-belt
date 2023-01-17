@@ -71,10 +71,10 @@ func (s PCs) String() string {
 	}
 	frameDepth := 1
 	for {
-		frame, ok := frames.Next()
+		frame, haveMore := frames.Next()
 		result.WriteString(fmt.Sprintf("%d. %s:%d: %s\n", frameDepth, frame.File, frame.Line, frame.Function))
 		frameDepth++
-		if !ok {
+		if !haveMore {
 			break
 		}
 	}
