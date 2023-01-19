@@ -10,7 +10,7 @@
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package caller
+package runtime
 
 import (
 	"runtime"
@@ -27,13 +27,13 @@ var (
 	}
 )
 
-// PC returns the Program Counter (PC) of the caller.
+// Caller returns the Program Counter (PC) of the caller.
 //
 // The caller in the call stack is defined by the frameFilter.
 // If the frameFilter is nil then the DefaultPCFilter is used instead.
-func PC(frameFilter PCFilter) uintptr {
+func Caller(frameFilter PCFilter) PC {
 	if frameFilter == nil {
-		frameFilter = DefaultPCFilter
+		frameFilter = DefaultCallerPCFilter
 	}
 
 	pcs := pcsPool.Get().(*[]uintptr)
@@ -43,7 +43,7 @@ func PC(frameFilter PCFilter) uintptr {
 	for i := 0; i < n; i++ {
 		pc := (*pcs)[i]
 		if frameFilter(pc) {
-			return pc
+			return PC(pc)
 		}
 	}
 
@@ -57,9 +57,9 @@ func PC(frameFilter PCFilter) uintptr {
 // The function is called sequentially from the top of the call stack until first true is met.
 type PCFilter func(pc uintptr) bool
 
-// DefaultPCFilter is an overridable function used to get the default PCFilter, used
+// DefaultCallerPCFilter is an overridable function used to get the default PCFilter, used
 // by function PC, if one was not provided.
-var DefaultPCFilter PCFilter = func(pc uintptr) bool {
+var DefaultCallerPCFilter PCFilter = func(pc uintptr) bool {
 	fn := runtime.FuncForPC(pc)
 	funcName := fn.Name()
 	switch {

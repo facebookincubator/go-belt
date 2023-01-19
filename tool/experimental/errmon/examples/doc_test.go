@@ -51,7 +51,7 @@ func Example() {
 	someContextyFunction(ctx, 4)
 
 	// use a singletony ErrorMonitor:
-	errmon.Default = func() errmon.ErrorMonitor {
+	errmon.Default = func(b *belt.Belt) errmon.ErrorMonitor {
 		return m
 	}
 	yetOneMoreFunction(5)
@@ -89,7 +89,7 @@ func anotherContextyFunction(ctx context.Context) {
 }
 
 func yetOneMoreFunction(arg int) {
-	m := errmon.Default()
+	m := errmon.Default(nil)
 	m = errmon.WithField(m, "arg", arg)
 	defer func() { m.ObserveRecover(nil, recover()) }()
 	// ..do something here..
