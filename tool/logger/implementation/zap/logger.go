@@ -19,6 +19,7 @@ package zap
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -252,6 +253,17 @@ func (l *CompactLogger) logZapEntryNoHooks(zapEntry *zapcore.Entry, zapFields ..
 	l.prepareEmitter()
 	l.zapSetCaller(zapEntry)
 	l.emitter.LogZapEntry(*zapEntry, zapFields...)
+
+	// zap authors decided not to panic or/and exit on Panics and Fatals,
+	// see: https://github.com/uber-go/zap/issues/358
+	//
+	// So doing this manually here:
+	switch zapEntry.Level {
+	case zap.PanicLevel, zap.DPanicLevel:
+		panic(fmt.Sprintf("%#+v: %#+v", *zapEntry, zapFields))
+	case zap.FatalLevel:
+		os.Exit(1)
+	}
 }
 
 func (l *CompactLogger) zapSetCaller(zapEntry *zapcore.Entry) {
@@ -355,8 +367,10 @@ func (l *CompactLogger) Logf(level types.Level, format string, args ...any) {
 
 // Log implements types.CompactLogger.
 func (l *CompactLogger) Log(level types.Level, values ...any) {
+	forceProcess := level == logger.LevelFatal || level == logger.LevelPanic
+
 	preHooksResult := adapter.LogPreprocess(l.preHooks, l.traceIDs, level, l.emitter.CheckLevel(level), values...)
-	if preHooksResult.Skip {
+	if preHooksResult.Skip && !forceProcess {
 		return
 	}
 
