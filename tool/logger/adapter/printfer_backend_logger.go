@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/facebookincubator/go-belt/pkg/field"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
 )
 
@@ -91,6 +92,15 @@ func unstructuredMessageFromEntry(entry *types.Entry) string {
 		result.WriteString("] ")
 	}
 	result.WriteString(msg)
+
+	entry.Fields.ForEachField(func(f *field.Field) bool {
+		switch v := f.Value.(type) {
+		case error:
+			result.WriteString(" error:")
+			result.WriteString(v.Error())
+		}
+		return true
+	})
 
 	return result.String()
 }

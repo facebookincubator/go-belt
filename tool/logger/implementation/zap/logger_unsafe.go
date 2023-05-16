@@ -52,6 +52,9 @@ func fieldsToZap(length int, forEachField func(callback func(f *field.Field) boo
 		case float64:
 			zapField.Type = zapcore.Float64Type
 			zapField.Integer = int64(math.Float64bits(value))
+		case error:
+			zapField.Type = zapcore.ErrorType
+			zapField.Interface = f.Value
 		default:
 			zapField.Type = zapcore.ReflectType
 			zapField.Interface = f.Value
