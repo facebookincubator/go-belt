@@ -12,6 +12,7 @@
 
 package types
 
+//nolint:unused
 type fieldProperty uint
 
 const (

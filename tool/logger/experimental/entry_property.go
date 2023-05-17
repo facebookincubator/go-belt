@@ -12,6 +12,7 @@
 
 package experimental
 
+//nolint:unused
 type entryPropertyEnum uint
 
 const (
