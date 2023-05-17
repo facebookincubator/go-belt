@@ -42,10 +42,9 @@ type Slice[T AbstractFields] []T
 // Len implements AbstractFields.
 func (s Slice[T]) Len() int {
 	count := 0
-	s.ForEachField(func(f *Field) bool {
-		count++
-		return true
-	})
+	for _, items := range s {
+		count += items.Len()
+	}
 	return count
 }
 
