@@ -40,15 +40,23 @@ func (p *AnySlice) ForEachField(callback func(f *field.Field) bool) bool {
 			idx++
 			continue
 		}
-		v := reflect.Indirect(reflect.ValueOf(value))
-		if forEachFielder, ok := v.Interface().(field.ForEachFieldser); ok {
-			if !forEachFielder.ForEachField(callback) {
+
+		switch v := value.(type) {
+		case field.ForEachFieldser:
+			if !v.ForEachField(callback) {
 				return false
 			}
 			idx++
 			continue
+		case error:
+			callback(&field.Field{
+				Key:        "error",
+				Value:      v,
+				Properties: nil,
+			})
 		}
 
+		v := reflect.Indirect(reflect.ValueOf(value))
 		switch v.Kind() {
 		case reflect.Map:
 			r := ParseMapValue(v, callback)

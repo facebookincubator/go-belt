@@ -10,72 +10,30 @@
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package zap
+package valuesparser
 
 import (
-	"math"
-	"sync/atomic"
-	"unsafe"
+	"bytes"
+	"fmt"
+	"testing"
 
 	"github.com/facebookincubator/go-belt/pkg/field"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"github.com/stretchr/testify/assert"
 )
 
-func fieldsToZap(length int, forEachField func(callback func(f *field.Field) bool) bool) *[]zap.Field {
-	if length == 0 {
-		return nil
-	}
-	result := acquireZapFields()
-	if cap(*result) < length {
-		*result = make([]zap.Field, 0, length)
-	}
-	if len(*result) != 0 {
-		panic(len(*result))
-	}
+func TestAnySliceError(t *testing.T) {
+	err := fmt.Errorf("unit-test")
+	s := AnySlice{err}
 	count := 0
-	appendToResult := func(f *field.Field) bool {
+	r := s.ForEachField(func(f *field.Field) bool {
 		count++
-		if count > length {
-			return false
-		}
-		zapField := zap.Field{
-			Key: f.Key,
-		}
-		switch value := f.Value.(type) {
-		case string:
-			zapField.Type = zapcore.StringType
-			zapField.String = value
-		case int:
-			zapField.Type = zapcore.Int64Type
-			zapField.Integer = int64(value)
-		case float64:
-			zapField.Type = zapcore.Float64Type
-			zapField.Integer = int64(math.Float64bits(value))
-		case error:
-			zapField.Type = zapcore.ErrorType
-			zapField.Interface = f.Value
-		default:
-			zapField.Type = zapcore.ReflectType
-			zapField.Interface = f.Value
-		}
-		*result = append(*result, zapField)
+		assert.Equal(t, f.Key, "error")
 		return true
-	}
+	})
+	assert.True(t, r)
+	assert.Equal(t, count, 1)
 
-	// See the assumption described in the "WARNING" message of field.ForEachFieldser.
-	forEachField(*(*func(f *field.Field) bool)(noescape(unsafe.Pointer(&appendToResult))))
-
-	if len(*result) > length {
-		panic("should not happen")
-	}
-	return result
-}
-
-func (l *Emitter) setZapLogger(logger *zap.Logger) {
-	atomic.StorePointer((*unsafe.Pointer)((unsafe.Pointer)(&l.ZapLogger)), (unsafe.Pointer)(logger))
-}
-
-func (l *Emitter) getZapLogger() *zap.Logger {
-	return (*zap.Logger)(atomic.LoadPointer((*unsafe.Pointer)(noescape((unsafe.Pointer)(&l.ZapLogger)))))
+	var buf bytes.Buffer
+	s.WriteUnparsed(&buf)
+	assert.Equal(t, "", buf.String())
 }

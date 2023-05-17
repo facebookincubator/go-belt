@@ -14,6 +14,7 @@ package tests
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"net/url"
 	"strings"
@@ -109,7 +110,14 @@ func TestImplementations(t *testing.T) {
 		l.Logger.Errorf("unit-test")
 		l.Logger.Flush()
 		if !strings.Contains(l.Output.String(), "unit-test") {
-			t.Fatalf("logger %s did not print an error", l.Name)
+			t.Fatalf("logger %s did not print an error using Errorf", l.Name)
+		}
+		l.Output.Reset()
+
+		l.Logger.Error(fmt.Errorf("unit-test"))
+		l.Logger.Flush()
+		if !strings.Contains(l.Output.String(), "unit-test") {
+			t.Fatalf("logger %s did not print an error using Error", l.Name)
 		}
 		l.Output.Reset()
 	}
