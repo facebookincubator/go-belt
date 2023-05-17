@@ -20,6 +20,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/facebookincubator/go-belt"
+	"github.com/facebookincubator/go-belt/pkg/field"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/stdlib"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/zap"
@@ -120,5 +122,34 @@ func TestImplementations(t *testing.T) {
 			t.Fatalf("logger %s did not print an error using Error", l.Name)
 		}
 		l.Output.Reset()
+
+		logger := l.Logger.WithPreHooks(addExtraFieldPreHook{})
+		logger.Error(fmt.Errorf("unit-test"))
+		logger.Flush()
+		if !strings.Contains(l.Output.String(), "unit-test") {
+			t.Fatalf("logger %s did not print an error using Error with the PreHook", l.Name)
+		}
+		l.Output.Reset()
 	}
+}
+
+type addExtraFieldPreHook struct{}
+
+var addExtraFieldPreHookResult = types.PreHookResult{
+	ExtraFields: &field.Field{
+		Key:   "some-key",
+		Value: "some-value",
+	},
+}
+
+func (addExtraFieldPreHook) ProcessInput(belt.TraceIDs, types.Level, ...any) types.PreHookResult {
+	return addExtraFieldPreHookResult
+}
+
+func (addExtraFieldPreHook) ProcessInputf(belt.TraceIDs, types.Level, string, ...any) types.PreHookResult {
+	return addExtraFieldPreHookResult
+}
+
+func (addExtraFieldPreHook) ProcessInputFields(belt.TraceIDs, types.Level, string, field.AbstractFields) types.PreHookResult {
+	return addExtraFieldPreHookResult
 }
