@@ -79,13 +79,21 @@ func releaseZapFields(fieldsPtr *[]zap.Field) {
 // Flush implements types.Emitter.
 func (l Emitter) Flush() {
 	err := l.getZapLogger().Sync()
-	if err != nil {
-		l.Emit(&types.Entry{
-			Timestamp: time.Now(),
-			Level:     types.LevelError,
-			Message:   fmt.Sprintf("unable to Sync(): %v", err.Error()),
-		})
+	if err == nil {
+		return
 	}
+
+	errDesc := err.Error()
+	if strings.Contains(errDesc, "sync /dev/stderr: invalid argument") {
+		// Intentionally ignore this error, see https://github.com/uber-go/zap/issues/328
+		return
+	}
+
+	l.Emit(&types.Entry{
+		Timestamp: time.Now(),
+		Level:     types.LevelError,
+		Message:   fmt.Sprintf("unable to Sync(): %s", errDesc),
+	})
 }
 
 // CheckZapLevel returns true if the given zap's logging level is enabled in this logger.
