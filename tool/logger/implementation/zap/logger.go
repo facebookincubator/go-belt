@@ -116,7 +116,7 @@ func (l Emitter) Emit(entry *types.Entry) {
 	}
 
 	var zapFields []zap.Field
-	if !entry.Properties.Has(EntryPropertyIgnoreFields) {
+	if !entry.Properties.Has(EntryPropertyIgnoreFields) && entry.Fields != nil {
 		zapFieldsPtr := fieldsToZap(entry.Fields.Len(), entry.Fields.ForEachField)
 		if zapFieldsPtr != nil {
 			defer releaseZapFields(zapFieldsPtr)
