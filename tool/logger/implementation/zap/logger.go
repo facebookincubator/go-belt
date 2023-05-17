@@ -184,6 +184,7 @@ func (l *CompactLogger) acquireEntry() *types.Entry {
 }
 
 func (l *CompactLogger) releaseEntry(entry *types.Entry) {
+	entry.Caller = 0
 	entry.Fields = nil
 	entry.Message = ""
 	entry.Properties = nil
@@ -199,6 +200,7 @@ func (l *CompactLogger) acquireZapEntry() *zapcore.Entry {
 func (l *CompactLogger) releaseZapEntry(entry *zapcore.Entry) {
 	entry.Message = ""
 	entry.Stack = ""
+	entry.Caller.Defined = false
 	l.zapEntryPool.Put(entry)
 }
 
