@@ -33,6 +33,7 @@ import (
 // * Reusable. It is a generic standardized way to handle observability tooling.
 // * Quality. Here we try to accumulate best practices, instead of having a quick solution for a single project.
 type Belt struct {
+	haveTools        bool
 	tools            Tools
 	toolsLocker      sync.Mutex
 	artifacts        Artifacts
@@ -49,6 +50,7 @@ func New() *Belt {
 
 func (belt *Belt) clone() *Belt {
 	return &Belt{
+		haveTools:        belt.haveTools,
 		tools:            belt.tools,
 		artifacts:        belt.artifacts,
 		traceIDs:         belt.traceIDs,
@@ -102,7 +104,7 @@ func (belt *Belt) Fields() field.AbstractFields {
 func (belt *Belt) WithTool(toolID ToolID, tool Tool) *Belt {
 	clone := belt.clone()
 
-	tools := make(Tools, len(clone.tools))
+	tools := make(Tools, len(clone.tools)+1)
 	belt.toolsLocker.Lock()
 	for k, v := range clone.tools {
 		tools[k] = v
@@ -114,6 +116,7 @@ func (belt *Belt) WithTool(toolID ToolID, tool Tool) *Belt {
 		tools[toolID] = tool
 	}
 	clone.tools = tools
+	clone.haveTools = len(tools) > 0
 
 	return clone
 }
@@ -122,8 +125,8 @@ func (belt *Belt) WithTool(toolID ToolID, tool Tool) *Belt {
 //
 // Do not modify the output of this function! It is for reading only.
 func (belt *Belt) Tools() Tools {
-	if len(belt.tools) == 0 {
-		return belt.tools
+	if !belt.haveTools {
+		return nil
 	}
 	belt.toolsLocker.Lock()
 	defer belt.toolsLocker.Unlock()
