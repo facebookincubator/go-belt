@@ -18,6 +18,7 @@ import (
 	"log"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/facebookincubator/go-belt"
@@ -109,27 +110,54 @@ func getImplementations(t *testing.T) []logger {
 
 func TestImplementations(t *testing.T) {
 	for _, l := range getImplementations(t) {
-		l.Logger.Errorf("unit-test")
-		l.Logger.Flush()
-		if !strings.Contains(l.Output.String(), "unit-test") {
-			t.Fatalf("logger %s did not print an error using Errorf", l.Name)
-		}
-		l.Output.Reset()
+		t.Run(l.Name, func(t *testing.T) {
+			t.Run("race-check", func(t *testing.T) {
+				l.Output.Reset()
 
-		l.Logger.Error(fmt.Errorf("unit-test"))
-		l.Logger.Flush()
-		if !strings.Contains(l.Output.String(), "unit-test") {
-			t.Fatalf("logger %s did not print an error using Error", l.Name)
-		}
-		l.Output.Reset()
+				// this test supposed to be ran with "-race"
+				var wg sync.WaitGroup
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					l.Logger.Errorf("test0")
+				}()
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					l.Logger.Errorf("test1")
+				}()
+				wg.Wait()
+				l.Logger.Flush()
+			})
 
-		logger := l.Logger.WithPreHooks(addExtraFieldPreHook{})
-		logger.Error(fmt.Errorf("unit-test"))
-		logger.Flush()
-		if !strings.Contains(l.Output.String(), "unit-test") {
-			t.Fatalf("logger %s did not print an error using Error with the PreHook", l.Name)
-		}
-		l.Output.Reset()
+			t.Run("Errorf", func(t *testing.T) {
+				l.Output.Reset()
+				l.Logger.Errorf("unit-test")
+				l.Logger.Flush()
+				if !strings.Contains(l.Output.String(), "unit-test") {
+					t.Fatalf("logger %s did not print an error using Errorf", l.Name)
+				}
+			})
+
+			t.Run("Error", func(t *testing.T) {
+				l.Output.Reset()
+				l.Logger.Error(fmt.Errorf("unit-test"))
+				l.Logger.Flush()
+				if !strings.Contains(l.Output.String(), "unit-test") {
+					t.Fatalf("logger %s did not print an error using Error", l.Name)
+				}
+			})
+
+			t.Run("Error-with-PreHook", func(t *testing.T) {
+				l.Output.Reset()
+				logger := l.Logger.WithPreHooks(addExtraFieldPreHook{})
+				logger.Error(fmt.Errorf("unit-test"))
+				logger.Flush()
+				if !strings.Contains(l.Output.String(), "unit-test") {
+					t.Fatalf("logger %s did not print an error using Error with the PreHook", l.Name)
+				}
+			})
+		})
 	}
 }
 

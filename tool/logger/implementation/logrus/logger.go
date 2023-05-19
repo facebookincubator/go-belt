@@ -56,7 +56,7 @@ func (l *Emitter) Flush() {}
 
 // CheckLevel returns true if an event of a given logging level will be logged
 func (l *Emitter) CheckLevel(level types.Level) bool {
-	return LevelFromLogrus(l.LogrusEntry.Level) >= level
+	return LevelFromLogrus(l.getLogrusEntry().Level) >= level
 }
 
 // Emit implements types.Emitter
