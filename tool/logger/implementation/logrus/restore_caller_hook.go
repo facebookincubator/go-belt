@@ -13,15 +13,39 @@
 package logrus
 
 import (
+	"runtime"
+
 	"github.com/sirupsen/logrus"
 )
 
-// TextFormatter is a standard logrus.TextFormatter, but with
-// enabled printing of the caller if it is defined.
-type TextFormatter logrus.TextFormatter
+type logrusCtxKeyCallerT struct{}
 
-// Format implements logrus.Formatter.
-func (f *TextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
+var LogrusCtxKeyCaller = logrusCtxKeyCallerT{}
+
+// RestoreCallerHook is a logrus.Hook which sets the Caller
+// from a Context.
+type RestoreCallerHook struct{}
+
+var _ logrus.Hook = (*RestoreCallerHook)(nil)
+
+func newRestoreCallerHook() RestoreCallerHook {
+	return RestoreCallerHook{}
+}
+
+func (RestoreCallerHook) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+func (RestoreCallerHook) Fire(entry *logrus.Entry) error {
+
+	// restoring the Caller:
+	caller := entry.Context.Value(LogrusCtxKeyCaller)
+	if caller == nil {
+		// no Caller was set
+		return nil
+	}
+	entry.Caller, _ = caller.(*runtime.Frame)
+
+	// working around the check in standard formatters:
 	origLogger := entry.Logger
 	entry.Logger = &logrus.Logger{
 		Out:          origLogger.Out,
@@ -30,9 +54,8 @@ func (f *TextFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 		ReportCaller: true,
 		Level:        origLogger.Level,
 		ExitFunc:     origLogger.ExitFunc,
+		BufferPool:   origLogger.BufferPool,
 	}
-	defer func() {
-		entry.Logger = origLogger
-	}()
-	return (*logrus.TextFormatter)(f).Format(entry)
+
+	return nil
 }

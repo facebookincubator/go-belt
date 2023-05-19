@@ -20,7 +20,6 @@ package logrus
 import (
 	"context"
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
@@ -67,10 +66,15 @@ func (l *Emitter) Emit(entry *types.Entry) {
 	l.logEntry(entry)
 }
 
+func ptr[T any](in T) *T {
+	return &in
+}
+
 func (l *Emitter) logEntry(entry *types.Entry) {
 	logrusLevel := LevelToLogrus(entry.Level)
-	logrusEntry := *l.LogrusEntry
+	logrusEntry := ptr(*l.LogrusEntry) // shallow copy
 	logrusEntry.Level = logrusLevel
+	logrusEntry.Caller = nil
 	if entry.Caller.Defined() {
 		caller := &runtime.Frame{
 			PC:   uintptr(entry.Caller),
@@ -79,42 +83,72 @@ func (l *Emitter) logEntry(entry *types.Entry) {
 		caller.Function = caller.Func.Name()
 		caller.File, caller.Line = entry.Caller.FileLine()
 		caller.Entry = entry.Caller.Entry()
+
+		// this is effectively a no-op line, see RestoreCallerHook's description:
 		logrusEntry.Caller = caller
-	} else {
-		logrusEntry.Caller = nil
+		// the actualizator-line:
+		logrusEntry.Context = context.WithValue(
+			context.Background(), LogrusCtxKeyCaller, caller,
+		)
 	}
 	logrusEntry.Time = entry.Timestamp
 	if !entry.Properties.Has(EntryPropertyIgnoreFields) {
-		if newFields := entry.Fields.Len(); newFields > 0 {
-			fields := make(logrus.Fields, len(logrusEntry.Data)+newFields)
+		newFieldsCount := 0
+		if entry.Fields != nil {
+			newFieldsCount = entry.Fields.Len()
+		}
+		if newFieldsCount > 0 || entry.TraceIDs != nil {
+			fields := make(logrus.Fields, len(logrusEntry.Data)+newFieldsCount+1)
 			for k, v := range logrusEntry.Data {
 				fields[k] = v
 			}
-			entry.Fields.ForEachField(func(f *field.Field) bool {
-				fields[f.Key] = f.Value
-				return true
-			})
+			if entry.Fields != nil {
+				entry.Fields.ForEachField(func(f *field.Field) bool {
+					fields[f.Key] = f.Value
+					return true
+				})
+			}
 			logrusEntry.Data = fields
+			if entry.TraceIDs != nil {
+				logrusEntry.Data[FieldNameTraceIDs] = entry.TraceIDs
+			}
 		}
-	}
-	if entry.TraceIDs != nil {
-		logrusEntry.Data[FieldNameTraceIDs] = entry.TraceIDs
 	}
 	logrusEntry.Log(logrusLevel, entry.Message)
 }
 
 // NewEmitter returns a new types.Emitter implementation based on a logrus logger.
-func NewEmitter(logger *logrus.Logger) *Emitter {
-	logrusEntry := logger.WithContext(context.Background())
-
+// This functions takes ownership of the logrus Logger instance.
+func NewEmitter(logger *logrus.Logger, logLevel logger.Level) *Emitter {
 	// Enforcing Trace level, because we will take care of logging levels ourselves.
 	//
 	// This is required, because logrus does not support contextual logging levels,
-	// so we handle them manually to enable such feature.
-	logrusEntry.Level = logrus.TraceLevel
+	// so we handle them manually to provide with this feature.
+	logger.Level = logrus.TraceLevel
 
+	// Logrus internally duplicates Entry and does not copy the Caller, so
+	// to keep the Caller we implement a workaround hook, which manually restores
+	// it.
+	//
+	// Note:
+	// The problem is there with any ReportCaller value, because with
+	// ReportCaller disabled the Caller is just set to nil, but will
+	// ReportCaller enabled it overwrites Caller using logrus's internal logic.
+	// So either it is required to hack-around each Formatter or to use a Hook,
+	// or to call `write` method manually (which is extra unsafety).
+	logger.Hooks.Add(newRestoreCallerHook())
+	logger.ReportCaller = false
+
+	logrusEntry := newLogrusEntry(logger, LevelToLogrus(logLevel))
 	return &Emitter{
 		LogrusEntry: logrusEntry,
+	}
+}
+
+func newLogrusEntry(logrusLogger *logrus.Logger, level logrus.Level) *logrus.Entry {
+	return &logrus.Entry{
+		Logger: logrusLogger,
+		Level:  level,
 	}
 }
 
@@ -134,13 +168,6 @@ type CompactLogger struct {
 	emitter            *Emitter
 	contextFields      *field.FieldsChain
 	prepareEmitterOnce sync.Once
-}
-
-func newLogrusEntry(logrusLogger *logrus.Logger, level logrus.Level) *logrus.Entry {
-	return &logrus.Entry{
-		Logger: logrusLogger,
-		Level:  level,
-	}
 }
 
 var _ adapter.CompactLogger = (*CompactLogger)(nil)
@@ -164,6 +191,7 @@ func (l *CompactLogger) acquireEntry() *types.Entry {
 }
 
 func (l *CompactLogger) releaseEntry(entry *types.Entry) {
+	entry.Caller = 0
 	entry.Fields = nil
 	entry.Message = ""
 	entry.Properties = nil
@@ -405,12 +433,11 @@ func (l *CompactLogger) Emitter() types.Emitter {
 	return l.emitter
 }
 
-func newCompactLoggerFromLogrus(logrusLogger *logrus.Logger, level logrus.Level, opts ...types.Option) *CompactLogger {
+func newCompactLoggerFromLogrus(logrusLogger *logrus.Logger, level logger.Level, opts ...types.Option) *CompactLogger {
 	cfg := types.Options(opts).Config()
+	logrusLogger.ReportCaller = cfg.GetCallerFunc != nil
 	return &CompactLogger{
-		emitter: &Emitter{
-			LogrusEntry: newLogrusEntry(logrusLogger, level),
-		},
+		emitter: NewEmitter(logrusLogger, level),
 		mostlyPersistentData: &mostlyPersistentData{
 			getCallerFunc: cfg.GetCallerFunc,
 			fmtBufPool: &sync.Pool{
@@ -428,17 +455,11 @@ func newCompactLoggerFromLogrus(logrusLogger *logrus.Logger, level logrus.Level,
 }
 
 // New returns a types.Logger implementation based on a logrus Logger.
+//
+// This function takes ownership of the logger instance.
 func New(logger *logrus.Logger, opts ...types.Option) types.Logger {
-	origLevel := logger.Level
-
-	// Enforcing Trace level, because we will take care of logging levels ourselves.
-	//
-	// This is required, because logrus does not support contextual logging levels,
-	// so we handle them manually to enable such feature.
-	logger.Level = logrus.TraceLevel
-
 	return adapter.GenericSugar{
-		CompactLogger: newCompactLoggerFromLogrus(logger, origLevel, opts...),
+		CompactLogger: newCompactLoggerFromLogrus(logger, LevelFromLogrus(logger.Level), opts...),
 	}
 }
 
@@ -450,19 +471,7 @@ func New(logger *logrus.Logger, opts ...types.Option) types.Logger {
 //
 // Do not override this anywhere but in the `main` package.
 var DefaultLogrusLogger = func() *logrus.Logger {
-	l := logrus.New()
-	l.Formatter = &TextFormatter{
-		CallerPrettyfier: func(caller *runtime.Frame) (string, string) {
-			return "", fmt.Sprintf("%s:%d", filepath.Base(caller.File), caller.Line)
-		},
-	}
-
-	// Enforcing Trace level, because we will take care of logging levels ourselves.
-	//
-	// This is required, because logrus does not support contextual logging levels,
-	// so we handle them manually to enable such feature.
-	l.Level = logrus.TraceLevel
-	return l
+	return logrus.New()
 }
 
 // Default returns a types.Logger based on logrus, using the default configuration.

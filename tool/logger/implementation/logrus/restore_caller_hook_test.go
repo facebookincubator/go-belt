@@ -13,26 +13,29 @@
 package logrus
 
 import (
+	"bytes"
+	"encoding/json"
+	"testing"
+
+	"github.com/facebookincubator/go-belt/tool/logger"
+	"github.com/facebookincubator/go-belt/tool/logger/types"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
-// JSONFormatter is a standard logrus.JSONFormatter, but with
-// enabled printing of the caller if it is defined.
-type JSONFormatter logrus.JSONFormatter
-
-// Format implements logrus.Formatter.
-func (f *JSONFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	origLogger := entry.Logger
-	entry.Logger = &logrus.Logger{
-		Out:          origLogger.Out,
-		Hooks:        origLogger.Hooks,
-		Formatter:    origLogger.Formatter,
-		ReportCaller: true,
-		Level:        origLogger.Level,
-		ExitFunc:     origLogger.ExitFunc,
-	}
-	defer func() {
-		entry.Logger = origLogger
-	}()
-	return (*logrus.JSONFormatter)(f).Format(entry)
+func TestRestoreCallerHook(t *testing.T) {
+	var buf bytes.Buffer
+	l := logrus.New()
+	l.Out = &buf
+	l.Formatter = &logrus.JSONFormatter{}
+	e := NewEmitter(l, logger.LevelTrace)
+	e.Emit(&types.Entry{
+		Level:  logger.LevelDebug,
+		Caller: types.DefaultGetCallerFunc(),
+	})
+	e.Flush()
+	m := map[string]string{}
+	err := json.Unmarshal(buf.Bytes(), &m)
+	require.NoError(t, err)
+	require.NotEmpty(t, m["file"], buf.String())
 }
