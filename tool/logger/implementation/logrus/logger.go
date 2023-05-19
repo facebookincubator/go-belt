@@ -407,6 +407,7 @@ func (l *CompactLogger) Emitter() types.Emitter {
 
 func newCompactLoggerFromLogrus(logrusLogger *logrus.Logger, level logrus.Level, opts ...types.Option) *CompactLogger {
 	cfg := types.Options(opts).Config()
+	logrusLogger.ReportCaller = cfg.GetCallerFunc != nil
 	return &CompactLogger{
 		emitter: &Emitter{
 			LogrusEntry: newLogrusEntry(logrusLogger, level),
@@ -428,6 +429,8 @@ func newCompactLoggerFromLogrus(logrusLogger *logrus.Logger, level logrus.Level,
 }
 
 // New returns a types.Logger implementation based on a logrus Logger.
+//
+// This function takes ownership of the logger instance.
 func New(logger *logrus.Logger, opts ...types.Option) types.Logger {
 	origLevel := logger.Level
 
