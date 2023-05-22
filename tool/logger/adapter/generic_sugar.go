@@ -102,6 +102,11 @@ func (l GenericSugar) WithMessagePrefix(prefix string) types.Logger {
 	return GenericSugar{CompactLogger: l.CompactLogger.WithMessagePrefix(prefix)}
 }
 
+// WithMessagePrefix implements logger.Logger.
+func (l GenericSugar) WithEntryProperties(props ...types.EntryProperty) types.Logger {
+	return GenericSugar{CompactLogger: l.CompactLogger.WithEntryProperties(props...)}
+}
+
 // TraceFields implements logger.Logger.
 func (l GenericSugar) TraceFields(message string, fields field.AbstractFields) {
 	l.LogFields(types.LevelTrace, message, fields)
