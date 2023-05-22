@@ -190,6 +190,9 @@ func (l *CompactLogger) LogEntry(entry *types.Entry) {
 	l.logEntry(entry)
 }
 func (l *CompactLogger) logEntry(entry *types.Entry) {
+	if l.messagePrefix != "" {
+		entry.Message = l.messagePrefix + entry.Message
+	}
 	if !entry.Caller.Defined() && l.getCallerFunc != nil {
 		entry.Caller = l.getCallerFunc()
 	}

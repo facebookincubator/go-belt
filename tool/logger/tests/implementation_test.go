@@ -157,6 +157,16 @@ func TestImplementations(t *testing.T) {
 					t.Fatalf("logger %s did not print an error using Error with the PreHook", l.Name)
 				}
 			})
+
+			t.Run("WithMessagePrefix", func(t *testing.T) {
+				l.Output.Reset()
+				logger := l.Logger.WithMessagePrefix("specialMagic")
+				logger.Error(fmt.Errorf("unit-test"))
+				logger.Flush()
+				if !strings.Contains(l.Output.String(), "specialMagic") {
+					t.Fatalf("logger %s did not print the special magic string", l.Name)
+				}
+			})
 		})
 	}
 }
