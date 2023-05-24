@@ -14,8 +14,47 @@ package belt
 
 import (
 	"fmt"
+	"sync"
 	"testing"
+
+	"github.com/facebookincubator/go-belt/pkg/field"
 )
+
+type dummyTool struct{}
+
+var _ Tool = (*dummyTool)(nil)
+
+func (dummyTool) Flush() {}
+func (dummyTool) WithContextFields(allFields *field.FieldsChain, newFieldsCount int) Tool {
+	return dummyTool{}
+}
+func (dummyTool) WithTraceIDs(traceIDs TraceIDs, newTraceIDsCount int) Tool {
+	return dummyTool{}
+}
+
+var r0 any
+var r1 any
+
+func TestRace(t *testing.T) {
+	// this test is supposed to be ran with -race
+
+	belt := New()
+	belt = belt.WithTool("asd", dummyTool{})
+	belt = belt.WithField("someKey", "someValue")
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		r0 = belt.Tools()
+	}()
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		r1 = belt.Tools()
+	}()
+	wg.Wait()
+}
 
 func BenchmarkBeltTraceIDs(b *testing.B) {
 	for _, isSequential := range []bool{false, true} {
