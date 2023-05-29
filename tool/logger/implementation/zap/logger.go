@@ -151,14 +151,15 @@ func (l Emitter) LogZapEntry(zapEntry zapcore.Entry, zapFields ...zap.Field) {
 }
 
 type mostlyPersistentData struct {
-	entryPool     *sync.Pool
-	zapEntryPool  *sync.Pool
-	fmtBufPool    *sync.Pool
-	preHooks      logger.PreHooks
-	hooks         logger.Hooks
-	traceIDs      belt.TraceIDs
-	getCallerFunc types.GetCallerPC
-	messagePrefix string
+	entryPool       *sync.Pool
+	zapEntryPool    *sync.Pool
+	fmtBufPool      *sync.Pool
+	preHooks        logger.PreHooks
+	hooks           logger.Hooks
+	traceIDs        belt.TraceIDs
+	getCallerFunc   types.GetCallerPC
+	messagePrefix   string
+	entryProperties types.EntryProperties
 }
 
 // CompactLogger is an implementation of types.CompactLogger based on a zap logger.
@@ -182,13 +183,11 @@ func (l *CompactLogger) Flush() {
 
 var timeNow = time.Now
 
-var entryPropertiesIgnoreFields = types.EntryProperties{EntryPropertyIgnoreFields}
-
 func (l *CompactLogger) acquireEntry() *types.Entry {
 	entry := l.entryPool.Get().(*types.Entry)
 	entry.Timestamp = timeNow()
 	entry.Fields = l.contextFields
-	entry.Properties = entryPropertiesIgnoreFields
+	entry.Properties = append(entry.Properties, EntryPropertyIgnoreFields)
 	return entry
 }
 
@@ -196,7 +195,7 @@ func (l *CompactLogger) releaseEntry(entry *types.Entry) {
 	entry.Caller = 0
 	entry.Fields = nil
 	entry.Message = ""
-	entry.Properties = nil
+	entry.Properties = entry.Properties[:0]
 	l.entryPool.Put(entry)
 }
 
@@ -228,6 +227,9 @@ func (l *CompactLogger) releaseBuf(buf *strings.Builder) {
 func (l *CompactLogger) logEntry(entry *logger.Entry) {
 	if !entry.Caller.Defined() && l.getCallerFunc != nil {
 		entry.Caller = l.getCallerFunc()
+	}
+	if len(l.entryProperties) > 0 {
+		entry.Properties = append(entry.Properties, l.entryProperties)
 	}
 	if !adapter.ProcessHooks(l.hooks, entry) {
 		return
@@ -479,6 +481,13 @@ func (l *CompactLogger) clone() *CompactLogger {
 func (l *CompactLogger) WithMessagePrefix(prefix string) adapter.CompactLogger {
 	clone := l.clone()
 	clone.messagePrefix += prefix
+	return clone
+}
+
+// WithEntryProperties implements types.CompactLogger.
+func (l *CompactLogger) WithEntryProperties(props ...types.EntryProperty) adapter.CompactLogger {
+	clone := l.clone()
+	clone.entryProperties = clone.entryProperties.Add(props)
 	return clone
 }
 

@@ -36,6 +36,7 @@ type GenericLogger struct {
 	CurrentHooks    types.Hooks
 	MessagePrefix   string
 	GetCallerFunc   types.GetCallerPC
+	EntryProperties types.EntryProperties
 }
 
 var _ CompactLogger = (*GenericLogger)(nil)
@@ -319,6 +320,16 @@ func (l *GenericLogger) WithMessagePrefix(prefix string) CompactLogger {
 	return &newLogger
 }
 
+// WithMessagePrefix implements types.CompactLogger.
+func (l *GenericLogger) WithEntryProperties(props ...types.EntryProperty) CompactLogger {
+	if len(props) == 0 {
+		return l
+	}
+	newLogger := *l
+	newLogger.EntryProperties = newLogger.EntryProperties.Add(props)
+	return &newLogger
+}
+
 // ProcessHooks executes hooks and never returns false for Panic and Fatal logging
 // levels. In case of a "false" result from hooks for Panic or Fatal it adds
 // EntryProperty "experimental.EntryPropertySkipAllEmitters" and returns true.
@@ -370,7 +381,7 @@ func (l *GenericLogger) acquireEntry(level types.Level, message string, fields f
 	entry.TraceIDs = l.TraceIDs
 	entry.Message = l.MessagePrefix + message
 	entry.Fields = l.Fields.WithFields(fields)
-	entry.Properties = props
+	entry.Properties = l.EntryProperties.Add(props...)
 	entry.Caller = l.GetCallerFunc()
 	return entry
 }
