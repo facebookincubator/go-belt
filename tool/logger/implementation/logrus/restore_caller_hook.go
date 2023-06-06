@@ -36,6 +36,17 @@ func (RestoreCallerHook) Levels() []logrus.Level {
 	return logrus.AllLevels
 }
 func (RestoreCallerHook) Fire(entry *logrus.Entry) error {
+	if entry.Context == nil {
+		// It looks like the Hook was used not through the logrus adapter,
+		// but directly by calling logrus logger itself. In this case
+		// we should not do anything.
+		//
+		// This can happen if one creates a logrus adapter providing a logrus Logger
+		// which is also used somewhere outside of this logrus adapter. This is supposed
+		// to be forbidden (see the description of function `New`), but better to
+		// add a bit of defensive code and avoid panics:
+		return nil
+	}
 
 	// restoring the Caller:
 	caller := entry.Context.Value(LogrusCtxKeyCaller)
