@@ -18,7 +18,6 @@ import (
 	"log"
 
 	"github.com/facebookincubator/go-belt"
-	"github.com/facebookincubator/go-belt/beltctx"
 	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/glog"
 	xlogrus "github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
@@ -89,12 +88,14 @@ func anotherBeltyFunction(obs *belt.Belt) {
 }
 
 func someContextyFunction(ctx context.Context, arg int) {
-	ctx = beltctx.WithField(ctx, "arg", arg)
+	ctx = belt.WithField(ctx, "arg", arg)
 	anotherContextyFunction(ctx)
 }
 
 func anotherContextyFunction(ctx context.Context) {
 	logger.FromCtx(ctx).Debugf("hello world!")
+	// or a shorter form:
+	logger.Debugf(ctx, "hello world!")
 }
 
 func oneMoreFunction(arg int) {
