@@ -14,7 +14,6 @@ Out of the box tools (interfaces):
 |[Tracer](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/tracer/tracer.go#L22-L69) (experimental)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/tracer?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/tracer?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/tracer/examples/doc_test.go)|
 |[ErrorMonitor](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/errmon/types/error_monitor.go#L47-L89) (experimental)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/tool/experimental/errmon?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/tool/experimental/errmon?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/tool/experimental/errmon/examples/doc_test.go)|
 |[Belt](https://github.com/facebookincubator/go-belt/blob/main/belt.go#L21-L34)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt?tab=doc)||
-|Context (beltctx)|[![GoDoc](https://godoc.org/github.com/facebookincubator/go-belt/beltctx?status.svg)](https://pkg.go.dev/github.com/facebookincubator/go-belt/beltctx?tab=doc)|[example](https://github.com/facebookincubator/go-belt/blob/main/examples/everything/main.go#L39-L48)|
 
 Out of the box implementation examples:
 |Module|Implementation|GoDoc|QuickStart|
@@ -96,7 +95,7 @@ See also more detailed info on using `Logger` in [its README.md](https://github.
 
 ```go
 import (
-	"github.com/facebookincubator/go-belt/beltctx"	
+	"github.com/facebookincubator/go-belt/belt"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/zap"
 )
 
@@ -110,7 +109,7 @@ func main() {
 
 func someFunc(ctx context.Context) {
 	...
-	ctx = beltctx.WithField(ctx, "user_id", user.ID)
+	ctx = belt.WithField(ctx, "user_id", user.ID)
 	...
 	anotherFunc(ctx)
 	...
@@ -118,7 +117,7 @@ func someFunc(ctx context.Context) {
 
 func anotherFunc(ctx context.Context) {
 	...
-	logger.FromCtx(ctx).Debug("hello world!") // user_id will also be logged here
+	logger.Debug(ctx, "hello world!") // user_id will also be logged here
 	...
 }
 ```
@@ -207,7 +206,7 @@ import "github.com/facebookincubator/go-belt/tool/experimental/metrics"
 
 func someFunc(ctx context.Context) {
 	...
-	ctx = beltctx.WithField(ctx, "user_id", user.ID, metrics.FieldPropInclude)
+	ctx = belt.WithField(ctx, "user_id", user.ID, metrics.FieldPropInclude)
 	...
 	processRequest(ctx, req)
 	...
@@ -248,7 +247,7 @@ Again, all the fields (for example added through `WithField`) will also be logge
 
 Other features (like `Breadcrumb`-s) are also supported. For example:
 ```go
-ctx = beltctx.WithField("breadcrumb_user.fetch", &errmon.Breadcrumb{
+ctx = belt.WithField("breadcrumb_user.fetch", &errmon.Breadcrumb{
 	TS:         time.Now()
 	Path:       []string{"user", "fetch"}
 	Categories: []string{"user", "network"}
@@ -304,7 +303,7 @@ Benchmark/prod/depth205/WithField/callLog-true/adapted_zap-16     	     840	    
 It is still allowed (though discouraged) to do type-assertion of an observability tool if it is necessary. For example:
 
 ```go
-logrusEntry := logger.FromCtx(ctx).Emitter().(*logrusadapter.Emitter).LogrusEntry
+logrusEntry := logger.GetEmitter(ctx).(*logrusadapter.Emitter).LogrusEntry
 logrusEntry = logrusEntry.WithFields(logrus.Fields{
 	"oldFashionLogrusFieldKey": "some value",
 })
