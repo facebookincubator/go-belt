@@ -14,6 +14,8 @@ package tests
 
 import (
 	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/url"
@@ -24,6 +26,7 @@ import (
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/logrus"
+	"github.com/facebookincubator/go-belt/tool/logger/implementation/slog"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/stdlib"
 	"github.com/facebookincubator/go-belt/tool/logger/implementation/zap"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
@@ -41,6 +44,41 @@ func (buf *zapBuffer) Close() error {
 
 func (buf *zapBuffer) Sync() error {
 	return nil
+}
+
+type slogHandler struct {
+	bytes.Buffer
+	attrs []slog.Attr
+}
+
+var _ slog.Handler = (*slogHandler)(nil)
+
+func (h *slogHandler) Enabled(context.Context, slog.Level) bool {
+	return true
+}
+func (h *slogHandler) Handle(ctx context.Context, r slog.Record) error {
+	m := map[string]any{"extra_attrs": h.attrs, "record": r}
+	r.Attrs(func(a slog.Attr) bool {
+		m["attr_"+a.Key] = a.Value.String()
+		return true
+	})
+	b, err := json.Marshal(m)
+	if err != nil {
+		return fmt.Errorf("unable to encode the record: %w", err)
+	}
+	fmt.Println(string(b))
+	_, err = h.Buffer.Write(b)
+	if err != nil {
+		return fmt.Errorf("unable to write the entry: %w", err)
+	}
+	return nil
+}
+func (h slogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
+	h.attrs = append(h.attrs, attrs...)
+	return &h
+}
+func (h slogHandler) WithGroup(name string) slog.Handler {
+	return &h
 }
 
 type logger struct {
@@ -103,6 +141,16 @@ func getImplementations(t *testing.T) []logger {
 	// glog
 	{
 		// the upstream glog logger does not support diverting the output to a buffer
+	}
+
+	// slog
+	{
+		var handler slogHandler
+		result = append(result, logger{
+			Name:   "slog",
+			Logger: slog.NewFromHandler(&handler),
+			Output: &handler.Buffer,
+		})
 	}
 
 	return result

@@ -344,7 +344,7 @@ func (l *CompactLogger) Log(level types.Level, values ...any) {
 
 	buf := logger.acquireBuf()
 	defer logger.releaseBuf(buf)
-	valuesParser.WriteUnparsed(buf)
+	valuesParser.ExtractUnparsed(buf)
 
 	entry.Level = level
 	entry.Message = buf.String()

@@ -1,4 +1,4 @@
-// Copyright 2022 Meta Platforms, Inc. and affiliates.
+// Copyright 2023 Meta Platforms, Inc. and affiliates.
 //
 // Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 //
@@ -10,23 +10,26 @@
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package field
+package slog
 
-// Add adds collections of fields together into a bigger collection.
-func Add(in ...AbstractFields) AbstractFields {
-	if len(in) == 1 {
-		return in[0]
-	}
+import (
+	"github.com/facebookincubator/go-belt/pkg/field"
+	"golang.org/x/exp/slog"
+)
 
-	var result Slice[AbstractFields]
-	for _, fields := range in {
-		if fields == nil {
-			continue
-		}
-		result = append(result, fields)
+func fieldsToAttrs(r *slog.Record, fields field.AbstractFields) {
+	if fields == nil {
+		return
 	}
-	if len(result) == 1 {
-		return result[0]
+	fields.ForEachField(func(f *field.Field) bool {
+		r.AddAttrs(fieldToAttr(f))
+		return true
+	})
+}
+
+func fieldToAttr(f *field.Field) slog.Attr {
+	return slog.Attr{
+		Key:   f.Key,
+		Value: slog.AnyValue(f.Value),
 	}
-	return result
 }

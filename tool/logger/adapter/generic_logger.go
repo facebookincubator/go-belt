@@ -130,26 +130,14 @@ func (l *GenericLogger) Log(level types.Level, values ...any) {
 		}
 	}
 
-	// TODO: optimize this
 	valuesParser := valuesparser.AnySlice(values)
-	fields := make(field.Fields, 0, valuesParser.Len())
-	valuesParser.ForEachField(func(f *field.Field) bool {
-		fields = append(fields, *f)
-		return true
-	})
-
 	// TODO: optimize this
 	var buf strings.Builder
-	valuesParser.WriteUnparsed(&buf)
+	valuesParser.ExtractUnparsed(&buf)
 
-	var finalFields field.AbstractFields
-	if preHooksResult.ExtraFields != nil {
-		finalFields = field.Slice[field.AbstractFields]{fields, preHooksResult.ExtraFields}
-	} else {
-		finalFields = fields
-	}
+	fields := field.Add(valuesParser, preHooksResult.ExtraFields)
 
-	entry := l.acquireEntry(level, buf.String(), finalFields, preHooksResult.ExtraEntryProperties)
+	entry := l.acquireEntry(level, buf.String(), fields, preHooksResult.ExtraEntryProperties)
 	defer releaseEntry(entry)
 
 	l.emit(entry)
@@ -162,14 +150,9 @@ func (l *GenericLogger) LogFields(level types.Level, message string, fields fiel
 		return
 	}
 
-	var finalFields field.AbstractFields
-	if preHooksResult.ExtraFields != nil {
-		finalFields = field.Slice[field.AbstractFields]{fields, preHooksResult.ExtraFields}
-	} else {
-		finalFields = fields
-	}
+	fields = field.Add(fields, preHooksResult.ExtraFields)
 
-	entry := l.acquireEntry(level, message, finalFields, preHooksResult.ExtraEntryProperties)
+	entry := l.acquireEntry(level, message, fields, preHooksResult.ExtraEntryProperties)
 	defer releaseEntry(entry)
 
 	l.emit(entry)

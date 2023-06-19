@@ -412,9 +412,8 @@ func (l *CompactLogger) Log(level types.Level, values ...any) {
 
 		buf := l.acquireBuf()
 		defer l.releaseBuf(buf)
-		valuesParser.ForEachField(func(f *field.Field) bool { return true }) // just causing to parse the fields to make valuesParser.WriteUnparsed(buf) work correctly
 		buf.WriteString(l.messagePrefix)
-		valuesParser.WriteUnparsed(buf)
+		valuesParser.ExtractUnparsed(buf)
 		entry.Message = buf.String()
 
 		l.logEntry(entry)
@@ -444,7 +443,7 @@ func (l *CompactLogger) Log(level types.Level, values ...any) {
 	buf := l.acquireBuf()
 	defer l.releaseBuf(buf)
 	buf.WriteString(l.messagePrefix)
-	valuesParser.WriteUnparsed(buf)
+	valuesParser.ExtractUnparsed(buf)
 	entry.Message = buf.String()
 
 	l.logZapEntryNoHooks(entry, zapFields...)

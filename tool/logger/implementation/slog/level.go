@@ -1,4 +1,4 @@
-// Copyright 2022 Meta Platforms, Inc. and affiliates.
+// Copyright 2023 Meta Platforms, Inc. and affiliates.
 //
 // Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 //
@@ -10,23 +10,55 @@
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-package field
+package slog
 
-// Add adds collections of fields together into a bigger collection.
-func Add(in ...AbstractFields) AbstractFields {
-	if len(in) == 1 {
-		return in[0]
+import (
+	"github.com/facebookincubator/go-belt/tool/logger/types"
+	"golang.org/x/exp/slog"
+)
+
+// LevelToSlog converts logger.Level to slog.Level.
+func LevelToSlog(level types.Level) slog.Level {
+	switch level {
+	case types.LevelTrace:
+		return slog.LevelDebug - 1
+	case types.LevelDebug:
+		return slog.LevelDebug
+	case types.LevelInfo:
+		return slog.LevelInfo
+	case types.LevelWarning:
+		return slog.LevelWarn
+	case types.LevelError:
+		return slog.LevelError
+	case types.LevelPanic:
+		return slog.LevelError + 1
+	case types.LevelFatal:
+		return slog.LevelError + 2
 	}
 
-	var result Slice[AbstractFields]
-	for _, fields := range in {
-		if fields == nil {
-			continue
-		}
-		result = append(result, fields)
+	// not mapped logging level is an error per se:
+	return slog.LevelError
+}
+
+// LevelFromSlog converts slog.Level to logger.Level.
+func LevelFromSlog(level slog.Level) types.Level {
+	switch level {
+	case slog.LevelDebug - 1:
+		return types.LevelTrace
+	case slog.LevelDebug:
+		return types.LevelDebug
+	case slog.LevelInfo:
+		return types.LevelInfo
+	case slog.LevelWarn:
+		return types.LevelWarning
+	case slog.LevelError:
+		return types.LevelError
+	case slog.LevelError + 1:
+		return types.LevelPanic
+	case slog.LevelError + 2:
+		return types.LevelFatal
 	}
-	if len(result) == 1 {
-		return result[0]
-	}
-	return result
+
+	// not mapped logging level is an error per se:
+	return types.LevelError
 }

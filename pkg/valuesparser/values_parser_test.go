@@ -23,7 +23,7 @@ import (
 
 func TestAnySliceError(t *testing.T) {
 	err := fmt.Errorf("unit-test")
-	s := AnySlice{err}
+	s := AnySlice{err, "some string"}
 	count := 0
 	r := s.ForEachField(func(f *field.Field) bool {
 		count++
@@ -34,6 +34,7 @@ func TestAnySliceError(t *testing.T) {
 	assert.Equal(t, count, 1)
 
 	var buf bytes.Buffer
-	s.WriteUnparsed(&buf)
-	assert.Equal(t, "", buf.String())
+	s.ExtractUnparsed(&buf)
+	assert.Equal(t, "some string", buf.String())
+	assert.Equal(t, 1, len(s))
 }

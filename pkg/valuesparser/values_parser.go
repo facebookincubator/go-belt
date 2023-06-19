@@ -21,6 +21,54 @@ import (
 	"github.com/facebookincubator/go-belt/pkg/field"
 )
 
+type anyValue struct {
+	Value any
+}
+
+// ForEachField implements abstract.Field, but with one difference,
+// if callback is nil then the function returns true if (and only if)
+// the value is a structured value (which supposed to be interpreted as
+// a source of fields, but not as a part of an unstructured message).
+func (s anyValue) ForEachField(callback func(f *field.Field) bool) bool {
+	value := s.Value
+	if value == nil {
+		return true
+	}
+
+	switch v := value.(type) {
+	case field.ForEachFieldser:
+		if callback == nil {
+			return true
+		}
+		return v.ForEachField(callback)
+	case error:
+		if callback == nil {
+			return false
+		}
+		return callback(&field.Field{
+			Key:        "error",
+			Value:      v,
+			Properties: nil,
+		})
+	}
+
+	v := reflect.Indirect(reflect.ValueOf(value))
+	switch v.Kind() {
+	case reflect.Map:
+		if callback == nil {
+			return true
+		}
+		return ParseMapValue(v, callback)
+	case reflect.Struct:
+		if callback == nil {
+			return true
+		}
+		return ParseStructValue(nil, v, callback)
+	}
+
+	return callback != nil
+}
+
 // AnySlice a handler for arbitrary values, which extracts structured fields/values
 // by method ForEachField() and provides everything else as a string by method WriteUnparsed.
 //
@@ -31,48 +79,43 @@ import (
 // For example it is used to parse all the arguments of logger.Logger.Log.
 type AnySlice []any
 
-// ForEachField implements field.AbstractFields.
-func (p *AnySlice) ForEachField(callback func(f *field.Field) bool) bool {
-	for idx := 0; idx < len(*p); {
+// ExtractUnparsed removes all values which does not define a structured field
+// from the slice. The removed unstructured data is written to the writer.
+func (p *AnySlice) ExtractUnparsed(w io.Writer) {
+	count := 0
+	for idx := 0; idx < len(*p); idx++ {
 		value := (*p)[idx]
-
-		if value == nil {
-			idx++
+		isField := anyValue{Value: value}.ForEachField(nil)
+		if isField {
 			continue
 		}
 
-		switch v := value.(type) {
-		case field.ForEachFieldser:
-			if !v.ForEachField(callback) {
-				return false
-			}
-			idx++
-			continue
-		case error:
-			callback(&field.Field{
-				Key:        "error",
-				Value:      v,
-				Properties: nil,
-			})
-		}
+		fmt.Fprint(w, value)
+		count++
+		(*p)[idx] = nil
+	}
 
-		v := reflect.Indirect(reflect.ValueOf(value))
-		switch v.Kind() {
-		case reflect.Map:
-			r := ParseMapValue(v, callback)
-			(*p)[idx] = nil
-			if !r {
-				return false
-			}
-		case reflect.Struct:
-			r := ParseStructValue(nil, v, callback)
-			(*p)[idx] = nil
-			if !r {
-				return false
-			}
-		default:
-			idx++
+	if count == 0 {
+		return
+	}
+
+	dIdx := 0
+	for sIdx := 0; sIdx < len(*p); sIdx++ {
+		if (*p)[sIdx] == nil {
 			continue
+		}
+		(*p)[dIdx] = (*p)[sIdx]
+		dIdx++
+	}
+	*p = (*p)[:dIdx]
+}
+
+// ForEachField implements field.AbstractFields.
+func (p AnySlice) ForEachField(callback func(f *field.Field) bool) bool {
+	for idx := 0; idx < len(p); idx++ {
+		value := p[idx]
+		if !(anyValue{Value: value}.ForEachField(callback)) {
+			return false
 		}
 	}
 	return true
@@ -156,18 +199,6 @@ func ParseStructValue(fieldPath []string, _struct reflect.Value, callback func(f
 }
 
 // Len implements field.AbstractFields.
-func (p *AnySlice) Len() int {
-	return len(*p)
-}
-
-// WriteUnparsed writes unstructured data (everything that was never considered as a structured field by
-// ForEachField method) to the given io.Writer.
-func (p *AnySlice) WriteUnparsed(w io.Writer) {
-	for _, value := range *p {
-		if value == nil {
-			continue
-		}
-
-		fmt.Fprint(w, value)
-	}
+func (p AnySlice) Len() int {
+	return len(p)
 }
