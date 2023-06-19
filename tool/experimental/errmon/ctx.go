@@ -15,19 +15,19 @@ package errmon
 import (
 	"context"
 
-	"github.com/facebookincubator/go-belt/beltctx"
+	"github.com/facebookincubator/go-belt"
 )
 
 // FromCtx returns an ErrorMonitor given a context.
 //
 // Returns the Default ErrorMonitor if one is not set.
 func FromCtx(ctx context.Context) ErrorMonitor {
-	return FromBelt(beltctx.Belt(ctx))
+	return FromBelt(belt.CtxBelt(ctx))
 }
 
 // CtxWithErrorMonitor returns a context with an ErrorMonitor added.
 func CtxWithErrorMonitor(ctx context.Context, errMon ErrorMonitor) context.Context {
-	return beltctx.WithTool(ctx, ToolID, errMon)
+	return belt.WithTool(ctx, ToolID, errMon)
 }
 
 // ObserveErrorCtx calls ObserveError method of an ErrorMonitor in the given context.
@@ -40,7 +40,7 @@ func CtxWithErrorMonitor(ctx context.Context, errMon ErrorMonitor) context.Conte
 //	_, err := writer.Write(b)
 //	errmon.ObserveErrorCtx(ctx, err)
 func ObserveErrorCtx(ctx context.Context, err error) *Event {
-	belt := beltctx.Belt(ctx)
+	belt := belt.CtxBelt(ctx)
 	return FromBelt(belt).ObserveError(belt, err)
 }
 
@@ -55,6 +55,6 @@ func ObserveErrorCtx(ctx context.Context, err error) *Event {
 //
 // See also: https://go.dev/ref/spec#Handling_panics
 func ObserveRecoverCtx(ctx context.Context, recoverResult any) *Event {
-	belt := beltctx.Belt(ctx)
+	belt := belt.CtxBelt(ctx)
 	return FromBelt(belt).ObserveRecover(belt, recoverResult)
 }

@@ -15,7 +15,7 @@ package tracer
 import (
 	"context"
 
-	"github.com/facebookincubator/go-belt/beltctx"
+	"github.com/facebookincubator/go-belt"
 )
 
 // StartChildSpanFromCtx creates a child span, given a context. The parent span is
@@ -33,20 +33,20 @@ func StartSpanFromCtx(ctx context.Context, name string, options ...SpanOption) (
 // SpanFromCtx returns the current span, given a context. Returns a NoopSpan if
 // one is not set.
 func SpanFromCtx(ctx context.Context) Span {
-	return SpanFromBelt(beltctx.Belt(ctx))
+	return SpanFromBelt(belt.CtxBelt(ctx))
 }
 
 // CtxWithSpan returns a context derivative/clone with the specified Span.
 func CtxWithSpan(ctx context.Context, span Span) context.Context {
-	return beltctx.WithBelt(ctx, BeltWithSpan(beltctx.Belt(ctx), span))
+	return belt.CtxWithBelt(ctx, BeltWithSpan(belt.CtxBelt(ctx), span))
 }
 
 // FromCtx returns a Tracer, given a context.
 func FromCtx(ctx context.Context) Tracer {
-	return FromBelt(beltctx.Belt(ctx))
+	return FromBelt(belt.CtxBelt(ctx))
 }
 
 // CtxWithTracer returns a context derivative/clone with the specified Tracer.
 func CtxWithTracer(ctx context.Context, tracer Tracer) context.Context {
-	return beltctx.WithTool(ctx, ToolID, tracer)
+	return belt.WithTool(ctx, ToolID, tracer)
 }
