@@ -15,16 +15,16 @@ package metrics
 import (
 	"context"
 
-	"github.com/facebookincubator/go-belt/beltctx"
+	"github.com/facebookincubator/go-belt"
 )
 
 // FromCtx returns Metrics given a context. Returns the default
 // implementation if one is not set in the context.
 func FromCtx(ctx context.Context) Metrics {
-	return FromBelt(beltctx.Belt(ctx))
+	return FromBelt(belt.CtxBelt(ctx))
 }
 
 // CtxWithMetrics returns a context derivative/clone with the Metrics added.
 func CtxWithMetrics(ctx context.Context, metrics Metrics) context.Context {
-	return beltctx.WithTool(ctx, ToolID, metrics)
+	return belt.WithTool(ctx, ToolID, metrics)
 }
