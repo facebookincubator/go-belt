@@ -20,6 +20,7 @@ package logrus
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -116,6 +117,17 @@ func (l *Emitter) logEntry(entry *types.Entry) {
 		}
 	}
 	logrusEntry.Log(logrusLevel, entry.Message)
+	// A bug in logrus: if we call `Log(Fatal, ...` instead of `Fatal(...` then
+	// it does not call the exit function.
+	//
+	// Fixing this bug manually here:
+	if logrusLevel == logrus.FatalLevel {
+		exitFunc := logrusEntry.Logger.ExitFunc
+		if exitFunc == nil {
+			exitFunc = os.Exit
+		}
+		exitFunc(1) // we use the same exit code as the original logrus's Fatal.
+	}
 }
 
 // NewEmitter returns a new types.Emitter implementation based on a logrus logger.
