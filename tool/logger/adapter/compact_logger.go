@@ -128,4 +128,8 @@ type CompactLogger interface {
 
 	// WithMessagePrefix adds a string to all messages logged through the derived logger
 	WithMessagePrefix(prefix string) CompactLogger
+
+	// WithEntryProperties adds props to EntryProperties of each emitted Entry.
+	// This could be used only for enabling implementation-specific behavior.
+	WithEntryProperties(props ...types.EntryProperty) CompactLogger
 }

@@ -62,7 +62,7 @@ type Entry struct {
 // Any Emitter implementation, Hook or other tool may use it
 // for internal or/and external needs.
 //
-// For example, a Backlogger may support both async and sync logging,
+// For example, a Emitter may support both async and sync logging,
 // and it could be possible to request sync logging through a property.
 //
 // Another example is: if an error monitor and a logger are hooked to each
@@ -77,9 +77,31 @@ type EntryProperties []EntryProperty
 // It should be equal by both: type and value.
 func (s EntryProperties) Has(p EntryProperty) bool {
 	for _, cmp := range s {
+		if l, ok := cmp.(EntryProperties); ok {
+			if l.Has(p) {
+				return true
+			}
+			continue
+		}
 		if cmp == p {
 			return true
 		}
 	}
 	return false
+}
+
+// Add returns the concatenation of EntryProperties.
+//
+// Note! It does not work similar to classical `append` function,
+// instead it nests two slices into a new slice to optimize for CPU and RAM
+// (by avoiding extra memory allocation and copying).
+func (s EntryProperties) Add(a ...EntryProperty) EntryProperties {
+	switch {
+	case len(s) == 0:
+		return a
+	case len(a) == 0:
+		return s
+	default:
+		return EntryProperties{EntryProperties(s), EntryProperties(a)}
+	}
 }
