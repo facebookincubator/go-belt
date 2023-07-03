@@ -13,16 +13,14 @@
 package logrus
 
 import (
-	"sync/atomic"
-	"unsafe"
-
+	"github.com/go-ng/xatomic"
 	"github.com/sirupsen/logrus"
 )
 
 func (l *Emitter) setLogrusEntry(logger *logrus.Entry) {
-	atomic.StorePointer((*unsafe.Pointer)((unsafe.Pointer)(&l.LogrusEntry)), (unsafe.Pointer)(logger))
+	xatomic.StorePointer(&l.LogrusEntry, logger)
 }
 
 func (l *Emitter) getLogrusEntry() *logrus.Entry {
-	return (*logrus.Entry)(atomic.LoadPointer((*unsafe.Pointer)((unsafe.Pointer)(&l.LogrusEntry))))
+	return xatomic.LoadPointer(&l.LogrusEntry)
 }
