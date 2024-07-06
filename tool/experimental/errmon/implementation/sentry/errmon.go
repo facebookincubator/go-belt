@@ -15,6 +15,7 @@ package sentry
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/facebookincubator/go-belt/pkg/field"
 	"github.com/facebookincubator/go-belt/pkg/runtime"
@@ -235,6 +236,11 @@ func PackageToSentry(pkg *errmontypes.Package) sentry.SdkPackage {
 
 // EventToSentry converts an Event to the Sentry format.
 func EventToSentry(ev *errmontypes.Event) *sentry.Event {
+	earliestSpan := ev.Spans.Earliest()
+	var startTime time.Time
+	if earliestSpan != nil {
+		startTime = earliestSpan.StartTS()
+	}
 	result := &sentry.Event{
 		EventID:  sentry.EventID(ev.ID),
 		Level:    LevelToSentry(ev.Level),
@@ -250,7 +256,7 @@ func EventToSentry(ev *errmontypes.Event) *sentry.Event {
 		Modules: map[string]string{},
 		Extra:   map[string]interface{}{},
 
-		StartTime: ev.Spans.Earliest().StartTS(),
+		StartTime: startTime,
 		Spans:     SpansToSentry(ev.Spans),
 	}
 
@@ -259,7 +265,6 @@ func EventToSentry(ev *errmontypes.Event) *sentry.Event {
 			Type:       "error",
 			Value:      ev.Error.Error(),
 			Module:     FuncNameToSentryModule(ev.Caller.Func().Name()),
-			ThreadID:   "goroutine",
 			Stacktrace: StackTraceToSentry(ev.StackTrace),
 		})
 	}
@@ -268,7 +273,6 @@ func EventToSentry(ev *errmontypes.Event) *sentry.Event {
 			Type:       "panic",
 			Value:      fmt.Sprint(ev.PanicValue),
 			Module:     FuncNameToSentryModule(ev.Caller.Func().Name()),
-			ThreadID:   "goroutine",
 			Stacktrace: StackTraceToSentry(ev.StackTrace),
 		})
 	}
