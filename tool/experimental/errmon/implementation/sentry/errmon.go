@@ -319,6 +319,8 @@ func EventToSentry(ev *errmontypes.Event) *sentry.Event {
 		return true
 	}
 
-	ev.Fields.ForEachField(observeField)
+	if ev.Fields != nil {
+		ev.Fields.ForEachField(observeField)
+	}
 	return result
 }
