@@ -15,6 +15,7 @@ package logger
 import (
 	"fmt"
 
+	"github.com/facebookincubator/go-belt/pkg/field"
 	errmonadapter "github.com/facebookincubator/go-belt/tool/experimental/errmon/adapter"
 	errmontypes "github.com/facebookincubator/go-belt/tool/experimental/errmon/types"
 	"github.com/facebookincubator/go-belt/tool/logger"
@@ -58,8 +59,25 @@ func (h *Emitter) Emit(ev *errmontypes.Event) {
 	case ev.Exception.Error != nil:
 		ev.Entry.Message = ev.Exception.Error.Error()
 	}
+
+	var stackTrace any
+	if ev.Exception.StackTrace != nil {
+		stackTrace = ev.Exception.StackTrace.String()
+	}
+
 	level := eventLevel(ev)
 	ev.Entry.Level = level
+	ev.Entry.Fields = field.Add(ev.Fields, field.Map[any]{
+		"error_event.id":                    ev.ID,
+		"error_event.external_ids":          ev.ExternalIDs,
+		"error_event.exception.is_panic":    ev.Exception.IsPanic,
+		"error_event.exception.panic_value": ev.Exception.PanicValue,
+		"error_event.exception.error":       ev.Exception.Error,
+		"error_event.exception.stack_trace": stackTrace,
+		"error_event.spans":                 ev.Spans,
+		"error_event.current_goroutine_id":  ev.CurrentGoroutineID,
+		"error_event.goroutines":            ev.Goroutines,
+	})
 	h.Logger.Log(level, &ev.Entry)
 }
 
