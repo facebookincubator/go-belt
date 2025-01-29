@@ -13,6 +13,7 @@
 package glog
 
 import (
+	"github.com/facebookincubator/go-belt/tool/logger"
 	"github.com/facebookincubator/go-belt/tool/logger/adapter"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
 	"github.com/golang/glog"
@@ -42,13 +43,20 @@ func (l GLog) Flush() {
 
 // Emit implements types.Emitter
 func (l GLog) Emit(entry *types.Entry) {
-	file, line := entry.Caller.FileLine()
-	logging.printWithFileLine(
-		uint32(SeverityFromLevel(entry.Level)),
-		file, line,
-		entry.Properties.Has(EntryPropertyAlsoStderr(true)),
-		entry.Message,
-	)
+	switch entry.Level {
+	case logger.LevelTrace, logger.LevelDebug, logger.LevelInfo:
+		glog.Info(entry.Message)
+	case logger.LevelWarning:
+		glog.Warning(entry.Message)
+	case logger.LevelError:
+		glog.Error(entry.Message)
+	case logger.LevelPanic:
+		glog.Fatal(entry.Message)
+	case logger.LevelFatal:
+		glog.Exit(entry.Message)
+	default:
+		glog.Info("[UNKNOWN LOGGING LEVEL] " + entry.Message)
+	}
 }
 
 // Severity is the internal glog's logging level.
