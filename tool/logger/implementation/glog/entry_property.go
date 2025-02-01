@@ -17,6 +17,8 @@ import (
 )
 
 // EntryPropertyAlsoStderr is types.EntryProperty which makes the entry be also printed to stderr.
+//
+// OBSOLETE: the glog API changed, and this property does not do anything anymore.
 type EntryPropertyAlsoStderr bool
 
 var _ types.EntryProperty = EntryPropertyAlsoStderr(true)
