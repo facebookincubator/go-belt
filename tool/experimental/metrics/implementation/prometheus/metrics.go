@@ -18,6 +18,7 @@
 package prometheus
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strconv"
@@ -577,7 +578,7 @@ func (m *Metrics) WithTraceIDs(traceIDs belt.TraceIDs, newTraceIDsCount int) bel
 }
 
 // Flush implements metrics.Metrics (or more specifically belt.Tool).
-func (*Metrics) Flush() {}
+func (*Metrics) Flush(context.Context) {}
 
 func fieldsToLabels(fields field.AbstractFields) prometheus.Labels {
 	labels := make(prometheus.Labels, fields.Len())

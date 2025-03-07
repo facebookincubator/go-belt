@@ -13,13 +13,15 @@
 package belt
 
 import (
+	"context"
+
 	"github.com/facebookincubator/go-belt/pkg/field"
 )
 
 // Tool is an abstract observability tool. It could be a Logger, metrics, tracing or anything else.
 type Tool interface {
 	// Flush forces to flush all buffers.
-	Flush()
+	Flush(ctx context.Context)
 
 	// WithContextFields sets new context-defined fields. Supposed to be called
 	// only by an Belt.

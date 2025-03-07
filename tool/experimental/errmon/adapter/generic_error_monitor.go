@@ -13,6 +13,7 @@
 package adapter
 
 import (
+	"context"
 	"time"
 
 	"github.com/facebookincubator/go-belt"
@@ -170,4 +171,4 @@ func (h *GenericErrorMonitor) WithTraceIDs(allTraceIDs TraceIDs, _ int) belt.Too
 }
 
 // Flush implements metrics.Metrics (or more specifically belt.Tool).
-func (*GenericErrorMonitor) Flush() {}
+func (*GenericErrorMonitor) Flush(context.Context) {}

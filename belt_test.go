@@ -13,6 +13,7 @@
 package belt
 
 import (
+	"context"
 	"fmt"
 	"sync"
 	"testing"
@@ -24,7 +25,7 @@ type dummyTool struct{}
 
 var _ Tool = (*dummyTool)(nil)
 
-func (dummyTool) Flush() {}
+func (dummyTool) Flush(context.Context) {}
 func (dummyTool) WithContextFields(allFields *field.FieldsChain, newFieldsCount int) Tool {
 	return dummyTool{}
 }

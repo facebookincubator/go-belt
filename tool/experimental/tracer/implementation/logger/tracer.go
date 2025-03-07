@@ -105,8 +105,8 @@ func (t *TracerImpl) StartChildWithCtx(ctx context.Context, name string, options
 }
 
 // Flush implements tracer.Tracer.
-func (t *TracerImpl) Flush() {
-	t.Logger.Flush()
+func (t *TracerImpl) Flush(ctx context.Context) {
+	t.Logger.Flush(ctx)
 }
 
 func (t *TracerImpl) send(span *SpanImpl) {

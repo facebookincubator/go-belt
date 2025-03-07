@@ -131,7 +131,7 @@ func (t *TracerImpl) WithHooks(hooks ...tracer.Hook) tracer.Tracer {
 }
 
 // Flush implements tracer.Tracer.
-func (t *TracerImpl) Flush() {
+func (t *TracerImpl) Flush(context.Context) {
 	panic("not supported")
 }
 

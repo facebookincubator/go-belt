@@ -187,7 +187,7 @@ type CompactLogger struct {
 var _ adapter.CompactLogger = (*CompactLogger)(nil)
 
 // Flush implements types.CompactLogger
-func (l *CompactLogger) Flush() {
+func (l *CompactLogger) Flush(context.Context) {
 	l.emitter.Flush()
 	for _, hook := range l.hooks {
 		hook.Flush()

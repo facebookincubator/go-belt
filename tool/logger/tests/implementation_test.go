@@ -14,6 +14,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"net/url"
@@ -127,13 +128,13 @@ func TestImplementations(t *testing.T) {
 					l.Logger.Errorf("test1")
 				}()
 				wg.Wait()
-				l.Logger.Flush()
+				l.Logger.Flush(context.TODO())
 			})
 
 			t.Run("Errorf", func(t *testing.T) {
 				l.Output.Reset()
 				l.Logger.Errorf("unit-test")
-				l.Logger.Flush()
+				l.Logger.Flush(context.TODO())
 				if !strings.Contains(l.Output.String(), "unit-test") {
 					t.Fatalf("logger %s did not print an error using Errorf", l.Name)
 				}
@@ -142,7 +143,7 @@ func TestImplementations(t *testing.T) {
 			t.Run("Error", func(t *testing.T) {
 				l.Output.Reset()
 				l.Logger.Error(fmt.Errorf("unit-test"))
-				l.Logger.Flush()
+				l.Logger.Flush(context.TODO())
 				if !strings.Contains(l.Output.String(), "unit-test") {
 					t.Fatalf("logger %s did not print an error using Error", l.Name)
 				}
@@ -152,7 +153,7 @@ func TestImplementations(t *testing.T) {
 				l.Output.Reset()
 				logger := l.Logger.WithPreHooks(addExtraFieldPreHook{})
 				logger.Error(fmt.Errorf("unit-test"))
-				logger.Flush()
+				logger.Flush(context.TODO())
 				if !strings.Contains(l.Output.String(), "unit-test") {
 					t.Fatalf("logger %s did not print an error using Error with the PreHook", l.Name)
 				}
@@ -162,7 +163,7 @@ func TestImplementations(t *testing.T) {
 				l.Output.Reset()
 				logger := l.Logger.WithMessagePrefix("specialMagic")
 				logger.Error(fmt.Errorf("unit-test"))
-				logger.Flush()
+				logger.Flush(context.TODO())
 				if !strings.Contains(l.Output.String(), "specialMagic") {
 					t.Fatalf("logger %s did not print the special magic string", l.Name)
 				}

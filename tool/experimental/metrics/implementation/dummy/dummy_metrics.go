@@ -13,6 +13,8 @@
 package dummy
 
 import (
+	"context"
+
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
 	metrics "github.com/facebookincubator/go-belt/tool/experimental/metrics/types"
@@ -70,7 +72,7 @@ func (*Metrics) CountFields(key string, additionalFields field.AbstractFields) m
 }
 
 // Flush implements metrics.Metrics.
-func (*Metrics) Flush() {}
+func (*Metrics) Flush(context.Context) {}
 
 type gauge struct{}
 

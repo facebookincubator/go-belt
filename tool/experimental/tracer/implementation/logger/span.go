@@ -157,5 +157,5 @@ func (span *SpanImpl) FinishWithDuration(duration time.Duration) {
 
 // Flush implements tracer.Span
 func (span *SpanImpl) Flush() {
-	span.Tracer.Flush()
+	span.Tracer.Flush(context.TODO())
 }
