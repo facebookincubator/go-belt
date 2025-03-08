@@ -74,4 +74,4 @@ func (t noopTracer) WithHooks(...Hook) Tracer {
 }
 
 // Flush implements Tracer.
-func (noopTracer) Flush() {}
+func (noopTracer) Flush(context.Context) {}

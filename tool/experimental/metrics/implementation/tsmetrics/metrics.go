@@ -18,6 +18,8 @@
 package tsmetrics
 
 import (
+	"context"
+
 	"github.com/facebookincubator/go-belt/tool/experimental/metrics/types"
 	tsmetrics "github.com/xaionaro-go/metrics"
 )
@@ -180,4 +182,4 @@ func (m *Metrics) WithTraceIDs(traceIDs TraceIDs, newTraceIDsCount int) Tool {
 }
 
 // Flush implements metrics.Metrics (or more specifically belt.Tool).
-func (*Metrics) Flush() {}
+func (*Metrics) Flush(context.Context) {}

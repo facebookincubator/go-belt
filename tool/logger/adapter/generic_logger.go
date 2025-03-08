@@ -13,6 +13,7 @@
 package adapter
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -359,7 +360,7 @@ func (l *GenericLogger) emit(entry *types.Entry) {
 
 	switch entry.Level {
 	case types.LevelPanic, types.LevelFatal:
-		l.Flush()
+		l.Flush(context.TODO())
 		switch entry.Level {
 		case types.LevelPanic:
 			panic(fmt.Sprintf("panic was requested with the log entry: %#v", entry))
@@ -370,7 +371,7 @@ func (l *GenericLogger) emit(entry *types.Entry) {
 }
 
 // Flush implements types.CompactLogger.
-func (l *GenericLogger) Flush() {
+func (l *GenericLogger) Flush(context.Context) {
 	l.Emitters.Flush()
 }
 

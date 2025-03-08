@@ -13,6 +13,8 @@
 package adapter
 
 import (
+	"context"
+
 	"github.com/facebookincubator/go-belt"
 	"github.com/facebookincubator/go-belt/pkg/field"
 	"github.com/facebookincubator/go-belt/tool/logger/types"
@@ -49,8 +51,8 @@ func (l GenericSugar) Logf(level types.Level, format string, args ...any) {
 }
 
 // Flush implements logger.Logger.
-func (l GenericSugar) Flush() {
-	l.CompactLogger.Flush()
+func (l GenericSugar) Flush(ctx context.Context) {
+	l.CompactLogger.Flush(ctx)
 }
 
 // Emitter implements logger.Logger.

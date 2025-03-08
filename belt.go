@@ -13,6 +13,7 @@
 package belt
 
 import (
+	"context"
 	"sync"
 
 	"github.com/facebookincubator/go-belt/pkg/field"
@@ -196,8 +197,15 @@ func (belt *Belt) TraceIDs() TraceIDs {
 }
 
 // Flush forces to flush all buffers of all the tools.
-func (belt *Belt) Flush() {
-	for _, tool := range belt.Tools() {
-		tool.Flush()
-	}
+func (belt *Belt) Flush(ctx context.Context) {
+	ctx, cancelFn := context.WithCancel(ctx)
+
+	go func(){
+		for _, tool := range belt.Tools() {
+			tool.Flush(ctx)
+		}
+		cancelFn()
+	}()
+
+	<-ctx.Done()
 }

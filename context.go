@@ -106,5 +106,5 @@ func GetTools(ctx context.Context) Tools {
 
 // CtxFlush forces to flush all buffers of all the tools.
 func Flush(ctx context.Context) {
-	CtxBelt(ctx).Flush()
+	CtxBelt(ctx).Flush(ctx)
 }

@@ -32,7 +32,7 @@ func CtxWithLogger(ctx context.Context, logger Logger) context.Context {
 
 // Flush forces to flush all buffers.
 func Flush(ctx context.Context) {
-	FromCtx(ctx).Flush()
+	FromCtx(ctx).Flush(ctx)
 }
 
 // WithContextFields is a shorthand for FromCtx(ctx).WithContextFields

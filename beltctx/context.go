@@ -133,5 +133,5 @@ func Tools(ctx context.Context) belt.Tools {
 //
 // Deprecated: use belt.Flush, instead.
 func Flush(ctx context.Context) {
-	Belt(ctx).Flush()
+	Belt(ctx).Flush(ctx)
 }

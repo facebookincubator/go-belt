@@ -18,6 +18,7 @@
 package simplemetrics
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -219,4 +220,4 @@ func (metrics *Metrics) WithTraceIDs(traceIDs TraceIDs, newTraceIDsCount int) To
 }
 
 // Flush implements metrics.Metrics (or more specifically belt.Tool).
-func (*Metrics) Flush() {}
+func (*Metrics) Flush(context.Context) {}
